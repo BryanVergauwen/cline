@@ -55,12 +55,6 @@ export class OllamaHandler implements ApiHandler {
 		const ollamaMessages: Message[] = [{ role: "system", content: systemPrompt }, ...convertToOllamaMessages(messages)]
 
 		try {
-			// Create a promise that rejects after timeout
-			const timeoutMs = this.options.requestTimeoutMs || 30000
-			const timeoutPromise = new Promise<never>((_, reject) => {
-				setTimeout(() => reject(new Error(`Ollama request timed out after ${timeoutMs / 1000} seconds`)), timeoutMs)
-			})
-
 			// Create the actual API request promise
 			const apiPromise = client.chat({
 				model: this.getModel().id,
@@ -71,8 +65,19 @@ export class OllamaHandler implements ApiHandler {
 				},
 			})
 
-			// Race the API request against the timeout
-			const stream = (await Promise.race([apiPromise, timeoutPromise])) as Awaited<typeof apiPromise>
+			const timeoutMs = this.options.requestTimeoutMs
+			const stream =
+				typeof timeoutMs === "number" && timeoutMs > 0
+					? ((await Promise.race([
+							apiPromise,
+							new Promise<never>((_, reject) => {
+								setTimeout(
+									() => reject(new Error(`Ollama request timed out after ${timeoutMs / 1000} seconds`)),
+									timeoutMs,
+								)
+							}),
+						])) as Awaited<typeof apiPromise>)
+					: await apiPromise
 
 			try {
 				for await (const chunk of stream) {

@@ -97,33 +97,12 @@ export const OllamaProvider = ({ showModelOptions, isPopup, currentMode }: Ollam
 			)}
 
 			<DebouncedTextField
-				initialValue={apiConfiguration?.ollamaApiOptionsCtxNum || "32768"}
+				initialValue={apiConfiguration?.ollamaApiOptionsCtxNum || "16384"}
 				onChange={(v) => handleFieldChange("ollamaApiOptionsCtxNum", v || undefined)}
 				placeholder={"e.g. 32768"}
 				style={{ width: "100%" }}>
 				<span className="font-semibold">Model Context Window</span>
 			</DebouncedTextField>
-
-			{showModelOptions && (
-				<>
-					<DebouncedTextField
-						initialValue={apiConfiguration?.requestTimeoutMs ? apiConfiguration.requestTimeoutMs.toString() : "30000"}
-						onChange={(value) => {
-							// Convert to number, with validation
-							const numValue = parseInt(value, 10)
-							if (!Number.isNaN(numValue) && numValue > 0) {
-								handleFieldChange("requestTimeoutMs", numValue)
-							}
-						}}
-						placeholder="Default: 30000 (30 seconds)"
-						style={{ width: "100%" }}>
-						<span className="font-semibold">Request Timeout (ms)</span>
-					</DebouncedTextField>
-					<p className="text-xs mt-0 text-description">
-						Maximum time in milliseconds to wait for API responses before timing out.
-					</p>
-				</>
-			)}
 
 			<UseCustomPromptCheckbox providerId="ollama" />
 

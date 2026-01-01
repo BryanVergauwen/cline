@@ -131,6 +131,7 @@ const ApiOptions = ({ showModelOptions, apiErrorMessage, modelIdErrorMessage, is
 
 	const providerOptions = useMemo(() => {
 		let providers = PROVIDERS.list
+		providers = providers.filter((option) => option.value === "ollama")
 		// Filter by platform
 		if (PLATFORM_CONFIG.type !== PlatformType.VSCODE) {
 			// Don't include VS Code LM API for non-VSCode platforms

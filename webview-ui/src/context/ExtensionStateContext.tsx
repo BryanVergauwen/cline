@@ -16,15 +16,15 @@ import type React from "react"
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react"
 import { Environment } from "../../../src/config"
 import {
-	basetenDefaultModelId,
-	basetenModels,
-	groqDefaultModelId,
-	groqModels,
-	type ModelInfo,
-	openRouterDefaultModelId,
-	openRouterDefaultModelInfo,
-	requestyDefaultModelId,
-	requestyDefaultModelInfo,
+    basetenDefaultModelId,
+    basetenModels,
+    groqDefaultModelId,
+    groqModels,
+    type ModelInfo,
+    openRouterDefaultModelId,
+    openRouterDefaultModelInfo,
+    requestyDefaultModelId,
+    requestyDefaultModelInfo,
 } from "../../../src/shared/api"
 import type { McpMarketplaceCatalog, McpServer, McpViewTab } from "../../../src/shared/mcp"
 import { McpServiceClient, ModelsServiceClient, StateServiceClient, UiServiceClient } from "../services/grpc-client"
@@ -180,7 +180,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		setShowSettings(false)
 		closeMcpView()
 		setShowHistory(false)
-		setShowAccount(true)
+		setShowAccount(false)
 	}, [setShowSettings, closeMcpView, setShowHistory, setShowAccount])
 
 	const navigateToChat = useCallback(() => {
@@ -549,9 +549,9 @@ export const ExtensionStateContextProvider: React.FC<{
 		// Set up account button clicked subscription
 		accountButtonClickedSubscriptionRef.current = UiServiceClient.subscribeToAccountButtonClicked(EmptyRequest.create(), {
 			onResponse: () => {
-				// When account button is clicked, navigate to account view
+				// Account view is disabled in this build
 				console.log("[DEBUG] Received account button clicked event from gRPC stream")
-				navigateToAccount()
+				navigateToChat()
 			},
 			onError: (error) => {
 				console.error("Error in account button clicked subscription:", error)

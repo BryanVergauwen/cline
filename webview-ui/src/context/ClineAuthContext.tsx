@@ -22,6 +22,12 @@ export interface ClineAuthContextType {
 
 export const ClineAuthContext = createContext<ClineAuthContextType | undefined>(undefined)
 
+const DEFAULT_AUTH_CONTEXT: ClineAuthContextType = {
+	clineUser: null,
+	organizations: null,
+	activeOrganization: null,
+}
+
 export const ClineAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	const [user, setUser] = useState<ClineUser | null>(null)
 	const [userOrganizations, setUserOrganizations] = useState<UserOrganization[] | null>(null)
@@ -88,10 +94,7 @@ export const ClineAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
 export const useClineAuth = () => {
 	const context = useContext(ClineAuthContext)
-	if (context === undefined) {
-		throw new Error("useClineAuth must be used within a ClineAuthProvider")
-	}
-	return context
+	return context ?? DEFAULT_AUTH_CONTEXT
 }
 
 export const useClineSignIn = () => {

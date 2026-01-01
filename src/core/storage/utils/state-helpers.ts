@@ -484,6 +484,11 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 			apiProvider = "openrouter"
 		}
 
+		// Ollama-only hard defaults
+		const FORCED_API_PROVIDER: ApiProvider = "ollama"
+		const FORCED_OLLAMA_MODEL_ID = "qwen3-coder:30b-a3b-q4_K_M"
+		const FORCED_OLLAMA_CTX_NUM = "16384"
+
 		const mcpResponsesCollapsed = mcpResponsesCollapsedRaw ?? false
 
 		// Plan/Act separate models setting is a boolean indicating whether the user wants to use different models for plan and act. Existing users expect this to be enabled, while we want new users to opt in to this being disabled by default.
@@ -542,7 +547,7 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 			requestyBaseUrl,
 			openAiHeaders: openAiHeaders || {},
 			ollamaBaseUrl,
-			ollamaApiOptionsCtxNum,
+			ollamaApiOptionsCtxNum: FORCED_OLLAMA_CTX_NUM,
 			lmStudioBaseUrl,
 			lmStudioMaxTokens,
 			anthropicBaseUrl,
@@ -558,7 +563,8 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 			fireworksModelMaxTokens,
 			asksageApiUrl,
 			favoritedModelIds: favoritedModelIds || [],
-			requestTimeoutMs,
+			// Disable request timeouts (Ollama-only build)
+			requestTimeoutMs: undefined,
 			sapAiCoreBaseUrl,
 			sapAiCoreTokenUrl,
 			sapAiResourceGroup,
@@ -571,7 +577,7 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 			aihubmixBaseUrl,
 			aihubmixAppCode,
 			// Plan mode configurations
-			planModeApiProvider: planModeApiProvider || apiProvider,
+			planModeApiProvider: FORCED_API_PROVIDER,
 			planModeApiModelId,
 			// undefined means it was never modified, 0 means it was turned off
 			// (having this on by default ensures that <thinking> text does not pollute the user's chat and is instead rendered as reasoning)
@@ -584,7 +590,7 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 			planModeOpenRouterModelInfo,
 			planModeOpenAiModelId,
 			planModeOpenAiModelInfo,
-			planModeOllamaModelId,
+			planModeOllamaModelId: FORCED_OLLAMA_MODEL_ID,
 			planModeLmStudioModelId,
 			planModeLiteLlmModelId,
 			planModeLiteLlmModelInfo,
@@ -611,7 +617,7 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 			planModeNousResearchModelId,
 			geminiPlanModeThinkingLevel,
 			// Act mode configurations
-			actModeApiProvider: actModeApiProvider || apiProvider,
+			actModeApiProvider: FORCED_API_PROVIDER,
 			actModeApiModelId,
 			actModeThinkingBudgetTokens: actModeThinkingBudgetTokens ?? ANTHROPIC_MIN_THINKING_BUDGET,
 			actModeReasoningEffort,
@@ -622,7 +628,7 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 			actModeOpenRouterModelInfo,
 			actModeOpenAiModelId,
 			actModeOpenAiModelInfo,
-			actModeOllamaModelId,
+			actModeOllamaModelId: FORCED_OLLAMA_MODEL_ID,
 			actModeLmStudioModelId,
 			actModeLiteLlmModelId,
 			actModeLiteLlmModelInfo,
@@ -663,7 +669,7 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 			autoApprovalSettings: autoApprovalSettings || DEFAULT_AUTO_APPROVAL_SETTINGS, // default value can be 0 or empty string
 			globalClineRulesToggles: globalClineRulesToggles || {},
 			browserSettings: { ...DEFAULT_BROWSER_SETTINGS, ...browserSettings }, // this will ensure that older versions of browserSettings (e.g. before remoteBrowserEnabled was added) are merged with the default values (false for remoteBrowserEnabled)
-			preferredLanguage: preferredLanguage || "English",
+			preferredLanguage: "French - Français",
 			openaiReasoningEffort: (openaiReasoningEffort as OpenaiReasoningEffort) || "medium",
 			mode: mode || "act",
 			userInfo,
@@ -682,7 +688,7 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 			defaultTerminalProfile: defaultTerminalProfile ?? "default",
 			globalWorkflowToggles: globalWorkflowToggles || {},
 			qwenCodeOauthPath,
-			customPrompt,
+			customPrompt: "compact",
 			autoCondenseThreshold: autoCondenseThreshold || 0.75, // default to 0.75 if not set
 			backgroundEditEnabled: backgroundEditEnabled ?? false,
 			// Hooks require explicit user opt-in and are only supported on macOS/Linux

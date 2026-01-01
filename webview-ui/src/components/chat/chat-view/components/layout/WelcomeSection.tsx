@@ -12,7 +12,7 @@ import HomeHeader from "@/components/welcome/HomeHeader"
 import { SuggestedTasks } from "@/components/welcome/SuggestedTasks"
 import { useClineAuth } from "@/context/ClineAuthContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { AccountServiceClient, StateServiceClient } from "@/services/grpc-client"
+import { StateServiceClient } from "@/services/grpc-client"
 import { convertBannerData } from "@/utils/bannerUtils"
 import { getCurrentPlatform } from "@/utils/platformUtils"
 import { WelcomeSectionProps } from "../../types/chatTypes"
@@ -121,9 +121,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 				}
 
 				case BannerActionType.ShowAccount:
-					AccountServiceClient.accountLoginClicked(EmptyRequest.create()).catch((err) =>
-						console.error("Failed to get login URL:", err),
-					)
+					navigateToSettings("api")
 					break
 
 				case BannerActionType.ShowApiSettings:

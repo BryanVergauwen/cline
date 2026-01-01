@@ -18,12 +18,12 @@ import { freeModels, recommendedModels } from "@/components/settings/OpenRouterM
 import { SUPPORTED_ANTHROPIC_THINKING_MODELS } from "@/components/settings/providers/AnthropicProvider"
 import { SUPPORTED_BEDROCK_THINKING_MODELS } from "@/components/settings/providers/BedrockProvider"
 import {
-	filterOpenRouterModelIds,
-	getModelsForProvider,
-	getModeSpecificFields,
-	getProviderInfo,
-	normalizeApiConfiguration,
-	syncModeConfigurations,
+    filterOpenRouterModelIds,
+    getModelsForProvider,
+    getModeSpecificFields,
+    getProviderInfo,
+    normalizeApiConfiguration,
+    syncModeConfigurations,
 } from "@/components/settings/utils/providerUtils"
 import { useApiConfigurationHandlers } from "@/components/settings/utils/useApiConfigurationHandlers"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -816,9 +816,6 @@ const ModelPickerModal: React.FC<ModelPickerModalProps> = ({ isOpen, onOpenChang
 								<span>{getProviderLabel(provider)}</span>
 							</ProviderDropdownItem>
 						))}
-						<ProviderDropdownItem $isSelected={false} onClick={handleConfigureClick}>
-							<span style={{ color: "var(--vscode-textLink-foreground)" }}>+ Add provider</span>
-						</ProviderDropdownItem>
 					</ProviderDropdownPortal>,
 					document.body,
 				)}
