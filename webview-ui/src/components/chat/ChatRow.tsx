@@ -29,6 +29,7 @@ import SuccessButton from "@/components/common/SuccessButton"
 import McpResponseDisplay from "@/components/mcp/chat-display/McpResponseDisplay"
 import McpResourceRow from "@/components/mcp/configuration/tabs/installed/server-row/McpResourceRow"
 import McpToolRow from "@/components/mcp/configuration/tabs/installed/server-row/McpToolRow"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { PLATFORM_CONFIG, PlatformType } from "@/config/platform.config"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { cn } from "@/lib/utils"
@@ -572,6 +573,47 @@ export const ChatRowContent = memo(
 					title={title}></span>
 			)
 
+			const requestStatus = (() => {
+				const isRequest = message.type === "ask"
+				const isPending = message.partial === true
+				const label = isRequest ? "Request" : "Result"
+				const icon = isPending ? <ProgressIndicator /> : toolIcon("check", "green")
+				return { label, icon }
+			})()
+
+			const renderRequestPill = (tooltipText: string) => (
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<span
+							style={{
+								display: "inline-flex",
+								alignItems: "center",
+								gap: 6,
+								padding: "2px 6px",
+								borderRadius: 6,
+								border: "1px solid var(--vscode-editorGroup-border)",
+								color: "var(--vscode-descriptionForeground)",
+								cursor: "default",
+								flexShrink: 0,
+							}}>
+							<span style={{ fontSize: 12, lineHeight: "12px" }}>{requestStatus.label}</span>
+							<span style={{ display: "inline-flex", alignItems: "center" }}>{requestStatus.icon}</span>
+						</span>
+					</TooltipTrigger>
+					<TooltipContent sideOffset={6}>
+						<pre
+							style={{
+								margin: 0,
+								whiteSpace: "pre-wrap",
+								wordBreak: "break-word",
+								maxWidth: 520,
+							}}>
+							{tooltipText}
+						</pre>
+					</TooltipContent>
+				</Tooltip>
+			)
+
 			switch (tool.tool) {
 				case "editedExistingFile":
 					const content = tool?.content || ""
@@ -579,23 +621,33 @@ export const ChatRowContent = memo(
 					const editToolTitle = isApplyingPatch ? "Preparing changes:" : "Edit file:"
 					return (
 						<>
-							<div style={headerStyle}>
-								{toolIcon("edit")}
-								{tool.operationIsLocatedInWorkspace === false &&
-									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
-								<span style={{ fontWeight: "bold" }}>{editToolTitle}</span>
+							<div style={{ ...headerStyle, justifyContent: "space-between" }}>
+								<div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+									{toolIcon("edit")}
+									{tool.operationIsLocatedInWorkspace === false &&
+										toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
+									<span style={{ fontWeight: "bold" }}>{editToolTitle}</span>
+									<span
+										className="ph-no-capture"
+										style={{
+											whiteSpace: "nowrap",
+											overflow: "hidden",
+											textOverflow: "ellipsis",
+											flex: 1,
+										}}>
+										{tool.path ? ` ${cleanPathPrefix(tool.path)}` : ""}
+									</span>
+								</div>
+								{renderRequestPill(JSON.stringify(tool, null, 2))}
 							</div>
-							{backgroundEditEnabled && tool.path && tool.content ? (
-								<DiffEditRow isLoading={message.partial} patch={tool.content} path={tool.path} />
-							) : (
-								<CodeAccordian
-									// isLoading={message.partial}
-									code={tool.content}
-									isExpanded={isExpanded}
-									onToggleExpand={handleToggle}
-									path={tool.path!}
+							{tool.path && tool.content ? (
+								<DiffEditRow
+									collapsible={false}
+									isLoading={message.partial}
+									patch={tool.content}
+									path={tool.path}
 								/>
-							)}
+							) : null}
 						</>
 					)
 				case "fileDeleted":
@@ -644,21 +696,24 @@ export const ChatRowContent = memo(
 					const hasLineRange = typeof maybeStartLine === "number" && typeof maybeEndLine === "number"
 					const lineSuffix = hasLineRange ? ` (L${maybeStartLine}-L${maybeEndLine})` : ""
 					return (
-						<div style={headerStyle}>
-							{toolIcon("file-code")}
-							{tool.operationIsLocatedInWorkspace === false &&
-								toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
-							<span style={{ fontWeight: "bold" }}>Read file</span>
-							<span
-								className="ph-no-capture"
-								style={{
-									whiteSpace: "nowrap",
-									overflow: "hidden",
-									textOverflow: "ellipsis",
-									flex: 1,
-								}}>
-								{`: ${cleanPathPrefix(tool.path ?? "")}${lineSuffix}`}
-							</span>
+						<div style={{ ...headerStyle, justifyContent: "space-between" }}>
+							<div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+								{toolIcon("file-code")}
+								{tool.operationIsLocatedInWorkspace === false &&
+									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
+								<span style={{ fontWeight: "bold" }}>Read file:</span>
+								<span
+									className="ph-no-capture"
+									style={{
+										whiteSpace: "nowrap",
+										overflow: "hidden",
+										textOverflow: "ellipsis",
+										flex: 1,
+									}}>
+									{`${cleanPathPrefix(tool.path ?? "")}${lineSuffix}`}
+								</span>
+							</div>
+							{renderRequestPill(JSON.stringify(tool, null, 2))}
 						</div>
 					)
 				}
