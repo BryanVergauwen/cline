@@ -15,7 +15,6 @@
 
 import { setTimeout as setTimeoutPromise } from "node:timers/promises"
 import { formatResponse } from "@core/prompts/responses"
-import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { Logger } from "@services/logging/Logger"
 import { TerminalHangStage, TerminalUserInterventionAction, telemetryService } from "@services/telemetry"
 import { COMMAND_CANCEL_TOKEN } from "@shared/ExtensionMessage"
@@ -521,10 +520,8 @@ export async function orchestrateCommandExecution(
 	if (userFeedback) {
 		await callbacks.say("user_feedback", userFeedback.text, userFeedback.images, userFeedback.files)
 
-		let fileContentString = ""
-		if (userFeedback.files && userFeedback.files.length > 0) {
-			fileContentString = await processFilesIntoText(userFeedback.files)
-		}
+		const fileContentString = ""
+		void userFeedback.files
 
 		return {
 			userRejected: true,

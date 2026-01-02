@@ -22,7 +22,6 @@ import {
 import { sendPartialMessageEvent } from "@core/controller/ui/subscribeToPartialMessage"
 import { executePreCompactHookWithCleanup, HookCancellationError, HookExecution } from "@core/hooks/precompact-executor"
 import { ClineIgnoreController } from "@core/ignore/ClineIgnoreController"
-import { parseMentions } from "@core/mentions"
 import { summarizeTask } from "@core/prompts/contextManagement"
 import { formatResponse } from "@core/prompts/responses"
 import { parseSlashCommands } from "@core/slash-commands"
@@ -41,7 +40,6 @@ import { ensureCheckpointInitialized } from "@integrations/checkpoints/initializ
 import { ICheckpointManager } from "@integrations/checkpoints/types"
 import { DiffViewProvider } from "@integrations/editor/DiffViewProvider"
 import { formatContentBlockToMarkdown } from "@integrations/misc/export-markdown"
-import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
 import { ITerminalManager } from "@integrations/terminal/types"
 import { BrowserSession } from "@services/browser/BrowserSession"
@@ -961,15 +959,7 @@ export class Task {
 			...imageBlocks,
 		]
 
-		if (files && files.length > 0) {
-			const fileContentString = await processFilesIntoText(files)
-			if (fileContentString) {
-				userContent.push({
-					type: "text",
-					text: fileContentString,
-				})
-			}
-		}
+		void files
 
 		// Add TaskStart hook context to the conversation if provided
 		const hooksEnabled = this.stateManager.getGlobalSettingsKey("hooksEnabled")
@@ -1270,15 +1260,7 @@ export class Task {
 			newUserContent.push(...formatResponse.imageBlocks(responseImages))
 		}
 
-		if (responseFiles && responseFiles.length > 0) {
-			const fileContentString = await processFilesIntoText(responseFiles)
-			if (fileContentString) {
-				newUserContent.push({
-					type: "text",
-					text: fileContentString,
-				})
-			}
-		}
+		void responseFiles
 
 		// Inject file context warning if there were pending warnings from message editing
 		if (pendingContextWarning && pendingContextWarning.length > 0) {
@@ -2172,17 +2154,7 @@ export class Task {
 					feedbackUserContent.push(...formatResponse.imageBlocks(images))
 				}
 
-				let fileContentString = ""
-				if (files && files.length > 0) {
-					fileContentString = await processFilesIntoText(files)
-				}
-
-				if (fileContentString) {
-					feedbackUserContent.push({
-						type: "text",
-						text: fileContentString,
-					})
-				}
+				void files
 
 				userContent = feedbackUserContent
 			}
@@ -2968,14 +2940,7 @@ export class Task {
 		}
 
 		const parseTextBlock = async (text: string): Promise<string> => {
-			const parsedText = await parseMentions(
-				text,
-				cwd,
-				this.urlContentFetcher,
-				this.fileContextTracker,
-				this.workspaceManager,
-			)
-
+			const parsedText = text
 			const { processedText, needsClinerulesFileCheck: needsCheck } = await parseSlashCommands(
 				parsedText,
 				localWorkflowToggles,

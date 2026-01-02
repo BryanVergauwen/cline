@@ -73,6 +73,39 @@ export class ContextManager {
 		return null
 	}
 
+	private compactFileContentBlocks(text: string): string {
+		// If there are embedded <file_content> blocks, truncate their inner payloads.
+		// Keep the tag + a head/tail snippet so the model still has *some* code context.
+		const MAX_FILE_CONTENT_CHARS = 4_000
+		const regex = /<file_content\s+path="[^"]+">\n([\s\S]*?)\n<\/file_content>/g
+		return text.replace(regex, (fullMatch, inner) => {
+			if (typeof inner !== "string" || inner.length <= MAX_FILE_CONTENT_CHARS) {
+				return fullMatch
+			}
+			const headSize = Math.floor(MAX_FILE_CONTENT_CHARS * 0.6)
+			const tailSize = MAX_FILE_CONTENT_CHARS - headSize
+			const head = inner.slice(0, headSize)
+			const tail = inner.slice(inner.length - tailSize)
+			return fullMatch.replace(
+				inner,
+				`${head}\n\n[... truncated ${inner.length - MAX_FILE_CONTENT_CHARS} chars ...]\n\n${tail}`,
+			)
+		})
+	}
+
+	private compactLargeText(text: string): string {
+		const MAX_TEXT_CHARS = 8_000
+		if (text.length <= MAX_TEXT_CHARS) {
+			return this.compactFileContentBlocks(text)
+		}
+		const headSize = Math.floor(MAX_TEXT_CHARS * 0.6)
+		const tailSize = MAX_TEXT_CHARS - headSize
+		const head = text.slice(0, headSize)
+		const tail = text.slice(text.length - tailSize)
+		const compacted = `${head}\n\n[... truncated ${text.length - MAX_TEXT_CHARS} chars ...]\n\n${tail}`
+		return this.compactFileContentBlocks(compacted)
+	}
+
 	/**
 	 * Sets text in a content block, handling both regular text blocks and tool_result wrappers.
 	 * For tool_result blocks, sets text in content[0] (native tool calling format).
@@ -353,6 +386,22 @@ export class ContextManager {
 		}
 
 		const updatedMessages = this.applyContextHistoryUpdates(messages, deletedRange ? deletedRange[1] + 1 : 2)
+
+		// Lean reinjection: compact very large text/tool_result blocks to prevent huge context re-sends.
+		for (const msg of updatedMessages) {
+			if (!Array.isArray(msg.content)) {
+				continue
+			}
+			for (const block of msg.content) {
+				const text = this.getTextFromBlock(block)
+				if (typeof text === "string" && text.length > 0) {
+					const compacted = this.compactLargeText(text)
+					if (compacted !== text) {
+						this.setTextInBlock(block, compacted)
+					}
+				}
+			}
+		}
 
 		// Validate and fix tool_use/tool_result pairing
 		this.ensureToolResultsFollowToolUse(updatedMessages)

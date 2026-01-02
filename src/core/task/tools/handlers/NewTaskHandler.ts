@@ -1,6 +1,5 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
-import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
 import { ClineDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
@@ -48,10 +47,8 @@ export class NewTaskHandler implements IToolHandler, IPartialBlockHandler {
 
 		// If the user provided a response, treat it as feedback
 		if (text || (images && images.length > 0) || (newTaskFiles && newTaskFiles.length > 0)) {
-			let fileContentString = ""
-			if (newTaskFiles && newTaskFiles.length > 0) {
-				fileContentString = await processFilesIntoText(newTaskFiles)
-			}
+			const fileContentString = ""
+			void newTaskFiles
 
 			await config.callbacks.say("user_feedback", text ?? "", images, newTaskFiles)
 			return formatResponse.toolResult(

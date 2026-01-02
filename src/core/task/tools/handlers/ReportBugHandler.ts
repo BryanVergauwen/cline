@@ -1,6 +1,5 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
-import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
 import { createAndOpenGitHubIssue } from "@utils/github-url-utils"
 import * as os from "os"
@@ -100,10 +99,8 @@ export class ReportBugHandler implements IToolHandler, IPartialBlockHandler {
 
 		// If the user provided a response, treat it as feedback
 		if (text || (images && images.length > 0) || (reportBugFiles && reportBugFiles.length > 0)) {
-			let fileContentString = ""
-			if (reportBugFiles && reportBugFiles.length > 0) {
-				fileContentString = await processFilesIntoText(reportBugFiles)
-			}
+			const fileContentString = ""
+			void reportBugFiles
 
 			await config.callbacks.say("user_feedback", text ?? "", images, reportBugFiles)
 			return formatResponse.toolResult(

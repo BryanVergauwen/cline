@@ -5,7 +5,7 @@ import { combineErrorRetryMessages } from "@shared/combineErrorRetryMessages"
 import { combineHookSequences } from "@shared/combineHookSequences"
 import type { ClineApiReqInfo, ClineMessage } from "@shared/ExtensionMessage"
 import { getApiMetrics } from "@shared/getApiMetrics"
-import { BooleanRequest, StringRequest } from "@shared/proto/cline/common"
+import { StringRequest } from "@shared/proto/cline/common"
 import { useCallback, useEffect, useMemo } from "react"
 import { useMount } from "react-use"
 import { normalizeApiConfiguration } from "@/components/settings/utils/providerUtils"
@@ -13,7 +13,6 @@ import { useExtensionState } from "@/context/ExtensionStateContext"
 import { useShowNavbar } from "@/context/PlatformContext"
 import { FileServiceClient, UiServiceClient } from "@/services/grpc-client"
 import { Navbar } from "../menu/Navbar"
-import AutoApproveBar from "./auto-approve-menu/AutoApproveBar"
 // Import utilities and hooks from the new structure
 import {
 	ActionButtons,
@@ -173,9 +172,11 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement, showHistoryVie
 
 					if (textToCopy !== null) {
 						try {
-							FileServiceClient.copyToClipboard(StringRequest.create({ value: textToCopy })).catch((err) => {
-								console.error("Error copying to clipboard:", err)
-							})
+							FileServiceClient.copyToClipboard(StringRequest.create({ value: textToCopy })).catch(
+								(err: unknown) => {
+									console.error("Error copying to clipboard:", err)
+								},
+							)
 							e.preventDefault()
 						} catch (error) {
 							console.error("Error copying to clipboard:", error)
@@ -201,46 +202,22 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement, showHistoryVie
 	// Use message handlers hook
 	const messageHandlers = useMessageHandlers(messages, chatState)
 
-	const { selectedModelInfo } = useMemo(() => {
+	const { selectedModelInfo: normalizedSelectedModelInfo } = useMemo(() => {
 		return normalizeApiConfiguration(apiConfiguration, mode)
 	}, [apiConfiguration, mode])
 
-	const selectFilesAndImages = useCallback(async () => {
-		try {
-			const response = await FileServiceClient.selectFiles(
-				BooleanRequest.create({
-					value: selectedModelInfo.supportsImages,
-				}),
-			)
-			if (
-				response &&
-				response.values1 &&
-				response.values2 &&
-				(response.values1.length > 0 || response.values2.length > 0)
-			) {
-				const currentTotal = selectedImages.length + selectedFiles.length
-				const availableSlots = MAX_IMAGES_AND_FILES_PER_MESSAGE - currentTotal
-
-				if (availableSlots > 0) {
-					// Prioritize images first
-					const imagesToAdd = Math.min(response.values1.length, availableSlots)
-					if (imagesToAdd > 0) {
-						setSelectedImages((prevImages) => [...prevImages, ...response.values1.slice(0, imagesToAdd)])
-					}
-
-					// Use remaining slots for files
-					const remainingSlots = availableSlots - imagesToAdd
-					if (remainingSlots > 0) {
-						setSelectedFiles((prevFiles) => [...prevFiles, ...response.values2.slice(0, remainingSlots)])
-					}
-				}
-			}
-		} catch (error) {
-			console.error("Error selecting images & files:", error)
+	const selectedModelInfo = useMemo(() => {
+		return {
+			...normalizedSelectedModelInfo,
+			supportsImages: false,
 		}
-	}, [selectedModelInfo.supportsImages])
+	}, [normalizedSelectedModelInfo])
 
-	const shouldDisableFilesAndImages = selectedImages.length + selectedFiles.length >= MAX_IMAGES_AND_FILES_PER_MESSAGE
+	const selectFilesAndImages = useCallback(async () => {
+		return
+	}, [])
+
+	const shouldDisableFilesAndImages = true
 
 	// Listen for local focusChatInput event
 	useEffect(() => {
@@ -374,7 +351,6 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement, showHistoryVie
 				)}
 			</div>
 			<footer className="bg-(--vscode-sidebar-background)" style={{ gridRow: "2" }}>
-				<AutoApproveBar />
 				<ActionButtons
 					chatState={chatState}
 					messageHandlers={messageHandlers}

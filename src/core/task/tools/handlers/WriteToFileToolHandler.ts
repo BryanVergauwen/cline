@@ -4,7 +4,6 @@ import type { ToolUse } from "@core/assistant-message"
 import { constructNewFileContent } from "@core/assistant-message/diff"
 import { formatResponse } from "@core/prompts/responses"
 import { getWorkspaceBasename, resolveWorkspacePath } from "@core/workspace"
-import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { ClineSayTool } from "@shared/ExtensionMessage"
 import { fileExistsAtPath } from "@utils/fs"
 import { arePathsEqual, getReadablePath, isLocatedInWorkspace } from "@utils/path"
@@ -204,12 +203,10 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 						? "The file was not updated, and maintains its original contents."
 						: "The file was not created."
 
-					// Process user feedback if provided (with file content processing)
+					// Process user feedback if provided (file attachments disabled)
 					if (text || (images && images.length > 0) || (files && files.length > 0)) {
-						let fileContentString = ""
-						if (files && files.length > 0) {
-							fileContentString = await processFilesIntoText(files)
-						}
+						const fileContentString = ""
+						void files
 
 						// Push additional tool feedback using existing utilities
 						ToolResultUtils.pushAdditionalToolFeedback(
@@ -242,10 +239,8 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 				} else {
 					// User hit the approve button, and may have provided feedback
 					if (text || (images && images.length > 0) || (files && files.length > 0)) {
-						let fileContentString = ""
-						if (files && files.length > 0) {
-							fileContentString = await processFilesIntoText(files)
-						}
+						const fileContentString = ""
+						void files
 
 						// Push additional tool feedback using existing utilities
 						ToolResultUtils.pushAdditionalToolFeedback(

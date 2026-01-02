@@ -1,4 +1,3 @@
-import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
 import { findLast, parsePartialArrayString } from "@shared/array"
 import { ClineAsk, ClineAskQuestion } from "@shared/ExtensionMessage"
@@ -96,10 +95,8 @@ export class AskFollowupQuestionToolHandler implements IToolHandler, IPartialBlo
 		}
 
 		// Process any attached files
-		let fileContentString = ""
-		if (followupFiles && followupFiles.length > 0) {
-			fileContentString = await processFilesIntoText(followupFiles)
-		}
+		const fileContentString = ""
+		void followupFiles
 
 		return formatResponse.toolResult(`<answer>\n${text}\n</answer>`, images, fileContentString)
 	}

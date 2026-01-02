@@ -487,7 +487,7 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 		// Ollama-only hard defaults
 		const FORCED_API_PROVIDER: ApiProvider = "ollama"
 		const FORCED_OLLAMA_MODEL_ID = "qwen3-coder:30b-a3b-q4_K_M"
-		const FORCED_OLLAMA_CTX_NUM = "16384"
+		const FORCED_OLLAMA_CTX_NUM = "8192"
 
 		const mcpResponsesCollapsed = mcpResponsesCollapsedRaw ?? false
 

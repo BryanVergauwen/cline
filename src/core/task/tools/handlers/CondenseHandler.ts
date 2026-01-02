@@ -1,7 +1,6 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { ensureTaskDirectoryExists } from "@core/storage/disk"
-import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
 import { ClineAsk } from "@shared/ExtensionMessage"
 import { ClineDefaultTool } from "@/shared/tools"
@@ -43,10 +42,8 @@ export class CondenseHandler implements IToolHandler, IPartialBlockHandler {
 
 		// If the user provided a response, treat it as feedback
 		if (text || (images && images.length > 0) || (condenseFiles && condenseFiles.length > 0)) {
-			let fileContentString = ""
-			if (condenseFiles && condenseFiles.length > 0) {
-				fileContentString = await processFilesIntoText(condenseFiles)
-			}
+			const fileContentString = ""
+			void condenseFiles
 
 			await config.callbacks.say("user_feedback", text ?? "", images, condenseFiles)
 			return formatResponse.toolResult(

@@ -2,7 +2,6 @@ import { ApiHandler } from "@core/api"
 import { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { ToolResponse } from "@core/task"
-import { processFilesIntoText } from "@/integrations/misc/extract-text"
 import { Logger } from "@/services/logging/Logger"
 import { ClineAsk } from "@/shared/ExtensionMessage"
 import type { ToolExecutorCoordinator } from "../ToolExecutorCoordinator"
@@ -128,10 +127,8 @@ export class ToolResultUtils {
 		const { response, text, images, files } = await config.callbacks.ask(type, completeMessage, false)
 
 		if (text || (images && images.length > 0) || (files && files.length > 0)) {
-			let fileContentString = ""
-			if (files && files.length > 0) {
-				fileContentString = await processFilesIntoText(files)
-			}
+			const fileContentString = ""
+			void files
 
 			ToolResultUtils.pushAdditionalToolFeedback(config.taskState.userMessageContent, text, images, fileContentString)
 			await config.callbacks.say("user_feedback", text, images, files)

@@ -1,5 +1,4 @@
 import { formatResponse } from "@core/prompts/responses"
-import { processFilesIntoText } from "@integrations/misc/extract-text"
 import type { ClineContent } from "@shared/messages/content"
 
 /**
@@ -27,15 +26,7 @@ export async function buildUserFeedbackContent(text?: string, images?: string[],
 		content.push(...formatResponse.imageBlocks(images))
 	}
 
-	if (files && files.length > 0) {
-		const fileContentString = await processFilesIntoText(files)
-		if (fileContentString) {
-			content.push({
-				type: "text",
-				text: fileContentString,
-			})
-		}
-	}
+	void files
 
 	return content
 }
