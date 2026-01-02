@@ -2,7 +2,6 @@ import { BooleanRequest } from "@shared/proto/cline/common"
 import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { memo, useEffect, useState } from "react"
 import ClineLogoWhite from "@/assets/ClineLogoWhite"
-import ApiOptions from "@/components/settings/ApiOptions"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { StateServiceClient } from "@/services/grpc-client"
 import { validateApiConfiguration } from "@/utils/validate"
@@ -44,7 +43,6 @@ const WelcomeView = memo(() => {
 
 				<div className="mt-4.5">
 					<div>
-						<ApiOptions currentMode={mode} showModelOptions={false} />
 						<VSCodeButton className="mt-0.75" disabled={disableLetsGoButton} onClick={handleSubmit}>
 							Let's go!
 						</VSCodeButton>

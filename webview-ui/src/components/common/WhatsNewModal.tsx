@@ -3,7 +3,6 @@ import React, { useCallback, useRef } from "react"
 import { useMount } from "react-use"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { useApiConfigurationHandlers } from "../settings/utils/useApiConfigurationHandlers"
 
 interface WhatsNewModalProps {
 	open: boolean
@@ -12,8 +11,7 @@ interface WhatsNewModalProps {
 }
 
 export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ open, onClose, version }) => {
-	const { openRouterModels, setShowChatModelSelector, refreshOpenRouterModels } = useExtensionState()
-	const { handleFieldsChange } = useApiConfigurationHandlers()
+	const { setShowChatModelSelector, refreshOpenRouterModels } = useExtensionState()
 
 	const clickedModelsRef = useRef<Set<string>>(new Set())
 
@@ -22,20 +20,11 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ open, onClose, ver
 
 	const setModel = useCallback(
 		(modelId: string) => {
-			handleFieldsChange({
-				planModeOpenRouterModelId: modelId,
-				actModeOpenRouterModelId: modelId,
-				planModeOpenRouterModelInfo: openRouterModels[modelId],
-				actModeOpenRouterModelInfo: openRouterModels[modelId],
-				planModeApiProvider: "cline",
-				actModeApiProvider: "cline",
-			})
-
 			clickedModelsRef.current.add(modelId)
 			setShowChatModelSelector(true)
 			onClose()
 		},
-		[handleFieldsChange, openRouterModels, setShowChatModelSelector, onClose],
+		[setShowChatModelSelector, onClose],
 	)
 
 	const ModelButton: React.FC<{ modelId: string; label: string }> = ({ modelId, label }) => {

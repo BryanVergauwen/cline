@@ -1,7 +1,4 @@
 import { PulsingBorder } from "@paper-design/shaders-react"
-import { EmptyRequest } from "@shared/proto/cline/common"
-import { UpdateApiConfigurationRequest } from "@shared/proto/cline/models"
-import { convertApiConfigurationToProto } from "@shared/proto-conversions/models/api-configuration-conversion"
 import { type SlashCommand } from "@shared/slashCommands"
 import type React from "react"
 import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
@@ -13,7 +10,6 @@ import { useClineAuth } from "@/context/ClineAuthContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { usePlatform } from "@/context/PlatformContext"
 import { cn } from "@/lib/utils"
-import { ModelsServiceClient, StateServiceClient } from "@/services/grpc-client"
 import { isSafari } from "@/utils/platformUtils"
 import {
 	getMatchingSlashCommands,
@@ -24,7 +20,6 @@ import {
 	slashCommandRegexGlobal,
 	validateSlashCommand,
 } from "@/utils/slash-commands"
-import { validateApiConfiguration, validateModelId } from "@/utils/validate"
 import ClineRulesToggleModal from "../cline-rules/ClineRulesToggleModal"
 import ServersToggleModal from "./ServersToggleModal"
 import VoiceRecorder from "./VoiceRecorder"
@@ -74,7 +69,20 @@ const ModelContainer = styled.div`
 	min-width: 0;
 `
 const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
-	({ inputValue, setInputValue, sendingDisabled, placeholderText, selectedFiles, selectedImages, onFocusChange }, ref) => {
+	(
+		{
+			inputValue,
+			setInputValue,
+			sendingDisabled,
+			placeholderText,
+			selectedFiles,
+			selectedImages,
+			onSend,
+			onHeightChange,
+			onFocusChange,
+		},
+		ref,
+	) => {
 		const {
 			mode,
 			apiConfiguration,
@@ -419,32 +427,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			},
 			[updateCursorPosition],
 		)
-
-		// Separate the API config submission logic
-		const submitApiConfig = useCallback(async () => {
-			const apiValidationResult = validateApiConfiguration(mode, apiConfiguration)
-			const modelIdValidationResult = validateModelId(mode, apiConfiguration, openRouterModels)
-
-			if (!apiValidationResult && !modelIdValidationResult && apiConfiguration) {
-				try {
-					await ModelsServiceClient.updateApiConfigurationProto(
-						UpdateApiConfigurationRequest.create({
-							apiConfiguration: convertApiConfigurationToProto(apiConfiguration),
-						}),
-					)
-				} catch (error) {
-					console.error("Failed to update API configuration:", error)
-				}
-			} else {
-				StateServiceClient.getLatestState(EmptyRequest.create())
-					.then(() => {
-						console.log("State refreshed")
-					})
-					.catch((error) => {
-						console.error("Error refreshing state:", error)
-					})
-			}
-		}, [apiConfiguration, openRouterModels])
 
 		// Function to show error message for unsupported files for drag and drop
 		const showUnsupportedFileErrorMessage = () => {
