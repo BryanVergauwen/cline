@@ -639,9 +639,6 @@ export const ChatRowContent = memo(
 						</>
 					)
 				case "readFile": {
-					if (message.type === "ask") {
-						return null
-					}
 					const maybeStartLine = (tool as any).startLine
 					const maybeEndLine = (tool as any).endLine
 					const hasLineRange = typeof maybeStartLine === "number" && typeof maybeEndLine === "number"
