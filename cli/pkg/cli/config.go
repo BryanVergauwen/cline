@@ -53,8 +53,8 @@ func NewConfigCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "config",
 		Aliases: []string{"c"},
-		Short:   "Manage Cline configuration",
-		Long:    `Set and manage global Cline configuration variables.`,
+		Short:   "Manage configuration",
+		Long:    `Set and manage global configuration variables.`,
 	}
 
 	cmd.AddCommand(newConfigListCommand())

@@ -1,7 +1,7 @@
 import { PulsingBorder } from "@paper-design/shaders-react"
 import { type SlashCommand } from "@shared/slashCommands"
 import type React from "react"
-import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
+import { forwardRef, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import DynamicTextArea from "react-textarea-autosize"
 import styled from "styled-components"
 import { CHAT_CONSTANTS } from "@/components/chat/chat-view/constants"
@@ -406,6 +406,16 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			highlightLayerRef.current.scrollLeft = textAreaRef.current.scrollLeft
 		}, [localWorkflowToggles, globalWorkflowToggles, remoteWorkflowToggles, remoteConfigSettings])
 
+		const providerAndModelLabel = useMemo(() => {
+			const isPlan = mode === "plan"
+			const provider = isPlan ? apiConfiguration?.planModeApiProvider : apiConfiguration?.actModeApiProvider
+			const modelId = isPlan ? apiConfiguration?.planModeApiModelId : apiConfiguration?.actModeApiModelId
+			if (!provider && !modelId) {
+				return ""
+			}
+			return `${provider ?? ""}${provider && modelId ? ":" : ""}${modelId ?? ""}`
+		}, [apiConfiguration, mode])
+
 		useLayoutEffect(() => {
 			updateHighlights()
 		}, [inputValue, updateHighlights])
@@ -751,6 +761,10 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							<ServersToggleModal />
 
 							<ClineRulesToggleModal />
+
+							{providerAndModelLabel ? (
+								<div className="ml-2 text-xs opacity-70 truncate min-w-0">{providerAndModelLabel}</div>
+							) : null}
 
 							<ModelContainer ref={modelSelectorRef} />
 						</ButtonGroup>

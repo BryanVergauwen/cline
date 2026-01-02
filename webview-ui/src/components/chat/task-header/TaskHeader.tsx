@@ -150,16 +150,20 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 						)}
 					</div>
 					<div className="inline-flex items-center justify-end select-none shrink-0">
-						{isCostAvailable && (
-							<div
-								className="mx-1 px-1 py-0.25 rounded-full inline-flex shrink-0 text-badge-background bg-badge-foreground/80 items-center"
-								id="price-tag">
-								<span className="text-xs sm:text-sm">${totalCost?.toFixed(4)}</span>
-							</div>
-						)}
 						<NewTaskButton className={BUTTON_CLASS} onClick={onClose} />
 					</div>
 				</div>
+
+				<ContextWindow
+					cacheReads={cacheReads}
+					cacheWrites={cacheWrites}
+					contextWindow={selectedModelInfo?.contextWindow}
+					lastApiReqTotalTokens={lastApiReqTotalTokens}
+					onSendMessage={onSendMessage}
+					tokensIn={tokensIn}
+					tokensOut={tokensOut}
+					useAutoCondense={false} // Disable auto-condense configuration in UI for now
+				/>
 
 				{/* Expand/Collapse Task Details */}
 				{isTaskExpanded && (
@@ -189,17 +193,6 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 						{((task.images && task.images.length > 0) || (task.files && task.files.length > 0)) && (
 							<Thumbnails files={task.files ?? []} images={task.images ?? []} />
 						)}
-
-						<ContextWindow
-							cacheReads={cacheReads}
-							cacheWrites={cacheWrites}
-							contextWindow={selectedModelInfo?.contextWindow}
-							lastApiReqTotalTokens={lastApiReqTotalTokens}
-							onSendMessage={onSendMessage}
-							tokensIn={tokensIn}
-							tokensOut={tokensOut}
-							useAutoCondense={false} // Disable auto-condense configuration in UI for now
-						/>
 					</div>
 				)}
 			</div>

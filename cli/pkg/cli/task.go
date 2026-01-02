@@ -34,8 +34,8 @@ func NewTaskCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "task",
 		Aliases: []string{"t"},
-		Short:   "Manage Cline tasks",
-		Long:    `Create, monitor, and manage Cline AI tasks.`,
+		Short:   "Manage tasks",
+		Long:    `Create, monitor, and manage AI tasks.`,
 	}
 
 	cmd.AddCommand(newTaskNewCommand())

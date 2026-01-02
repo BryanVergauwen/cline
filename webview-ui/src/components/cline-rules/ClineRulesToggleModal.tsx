@@ -362,7 +362,7 @@ const ClineRulesToggleModal: React.FC = () => {
 		<div className="inline-flex min-w-0 max-w-full items-center" ref={modalRef}>
 			<div className="inline-flex w-full items-center" ref={buttonRef}>
 				<Tooltip>
-					{!isVisible && <TooltipContent>Manage Cline Rules & Workflows</TooltipContent>}
+					{!isVisible && <TooltipContent>Manage Rules & Workflows</TooltipContent>}
 					<TooltipTrigger>
 						<VSCodeButton
 							appearance="icon"
