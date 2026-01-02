@@ -1275,6 +1275,11 @@ export const ChatRowContent = memo(
 			case "say":
 				switch (message.say) {
 					case "api_req_started":
+						// Hide request details entirely for successful requests.
+						// Only keep this row when there's an error so users can inspect the request payload.
+						if (!apiRequestFailedMessage && !apiReqStreamingFailedMessage) {
+							return null
+						}
 						return (
 							<>
 								<div

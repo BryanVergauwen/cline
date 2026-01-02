@@ -100,6 +100,14 @@ export async function activate(context: vscode.ExtensionContext) {
 		}),
 	)
 
+	// Auto-open the Cline sidebar on startup.
+	// Note: VS Code/Cursor does not provide an API to force the sidebar width, but we can reveal/focus the view.
+	setTimeout(() => {
+		vscode.commands.executeCommand(`${ExtensionRegistryInfo.views.Sidebar}.focus`).catch(() => {
+			// Ignore if the command isn't available yet
+		})
+	}, 0)
+
 	const { commands } = ExtensionRegistryInfo
 
 	context.subscriptions.push(
