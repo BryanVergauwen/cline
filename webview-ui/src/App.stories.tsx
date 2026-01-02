@@ -797,7 +797,7 @@ const createNewFormatMultiFileMessages = () => [
 		tool: "editedExistingFile",
 		path: "src/auth/types.ts",
 		content: `*** Begin Patch
-*** Add File: src/auth/types.ts
+*** Add src/auth/types.ts
 +export interface User {
 +  id: string
 +  email: string
@@ -809,7 +809,7 @@ const createNewFormatMultiFileMessages = () => [
 +  isAuthenticated: boolean
 +}
 
-*** Update File: src/auth/login.ts
+*** Update src/auth/login.ts
 @@
 -function login(email, password) {
 -  return fetch('/api/login', {
@@ -825,7 +825,7 @@ const createNewFormatMultiFileMessages = () => [
 -export default login
 +export { login }
 
-*** Delete File: src/auth/old-utils.js
+*** Delete src/auth/old-utils.js
 -function deprecatedHelper() {
 -  console.log('This is deprecated')
 -}

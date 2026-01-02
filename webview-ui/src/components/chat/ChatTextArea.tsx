@@ -409,7 +409,10 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const providerAndModelLabel = useMemo(() => {
 			const isPlan = mode === "plan"
 			const provider = isPlan ? apiConfiguration?.planModeApiProvider : apiConfiguration?.actModeApiProvider
-			const modelId = isPlan ? apiConfiguration?.planModeApiModelId : apiConfiguration?.actModeApiModelId
+			const apiModelId = isPlan ? apiConfiguration?.planModeApiModelId : apiConfiguration?.actModeApiModelId
+			const ollamaModelId = isPlan ? apiConfiguration?.planModeOllamaModelId : apiConfiguration?.actModeOllamaModelId
+			const modelId =
+				apiModelId ?? (provider === "ollama" ? ollamaModelId : undefined) ?? (provider === "ollama" ? "local" : undefined)
 			if (!provider && !modelId) {
 				return ""
 			}
