@@ -48,7 +48,6 @@ import UserMessage from "./UserMessage"
 const normalColor = "var(--vscode-foreground)"
 const errorColor = "var(--vscode-errorForeground)"
 const successColor = "var(--vscode-charts-green)"
-const _cancelledColor = "var(--vscode-descriptionForeground)"
 
 const ChatRowContainer = styled.div`
 	padding: 10px 6px 10px 15px;
@@ -639,74 +638,30 @@ export const ChatRowContent = memo(
 							)}
 						</>
 					)
-				case "readFile":
-					const isImage = isImageFile(tool.path || "")
+				case "readFile": {
+					const maybeStartLine = (tool as any).startLine
+					const maybeEndLine = (tool as any).endLine
+					const hasLineRange = typeof maybeStartLine === "number" && typeof maybeEndLine === "number"
+					const lineSuffix = hasLineRange ? ` (L${maybeStartLine}-L${maybeEndLine})` : ""
 					return (
-						<>
-							<div style={headerStyle}>
-								{toolIcon(isImage ? "file-media" : "file-code")}
-								{tool.operationIsLocatedInWorkspace === false &&
-									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
-								<span style={{ fontWeight: "bold" }}>
-									{/* {message.type === "ask" ? "" : "Cline read this file:"} */}
-									Read file:
-								</span>
-							</div>
-							<div
+						<div style={headerStyle}>
+							{toolIcon("file-code")}
+							{tool.operationIsLocatedInWorkspace === false &&
+								toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
+							<span style={{ fontWeight: "bold" }}>Read file</span>
+							<span
+								className="ph-no-capture"
 								style={{
-									borderRadius: 3,
-									backgroundColor: CODE_BLOCK_BG_COLOR,
+									whiteSpace: "nowrap",
 									overflow: "hidden",
-									border: "1px solid var(--vscode-editorGroup-border)",
+									textOverflow: "ellipsis",
+									flex: 1,
 								}}>
-								<div
-									onClick={
-										isImage
-											? undefined
-											: () => {
-													FileServiceClient.openFile(
-														StringRequest.create({ value: tool.content }),
-													).catch((err) => console.error("Failed to open file:", err))
-												}
-									}
-									style={{
-										color: "var(--vscode-descriptionForeground)",
-										display: "flex",
-										alignItems: "center",
-										padding: "9px 10px",
-										cursor: isImage ? "default" : "pointer",
-										userSelect: isImage ? "text" : "none",
-										WebkitUserSelect: isImage ? "text" : "none",
-										MozUserSelect: isImage ? "text" : "none",
-										msUserSelect: isImage ? "text" : "none",
-									}}>
-									{tool.path?.startsWith(".") && <span>.</span>}
-									{tool.path && !tool.path.startsWith(".") && <span>/</span>}
-									<span
-										className="ph-no-capture"
-										style={{
-											whiteSpace: "nowrap",
-											overflow: "hidden",
-											textOverflow: "ellipsis",
-											marginRight: "8px",
-											direction: "rtl",
-											textAlign: "left",
-										}}>
-										{cleanPathPrefix(tool.path ?? "") + "\u200E"}
-									</span>
-									<div style={{ flexGrow: 1 }}></div>
-									{!isImage && (
-										<span
-											className={`codicon codicon-link-external`}
-											style={{
-												fontSize: 13.5,
-												margin: "1px 0",
-											}}></span>
-									)}
-								</div>
-							</div>
-						</>
+								{`: ${cleanPathPrefix(tool.path ?? "")}${lineSuffix}`}
+							</span>
+						</div>
 					)
+				}
 				case "listFilesTopLevel":
 					return (
 						<>
