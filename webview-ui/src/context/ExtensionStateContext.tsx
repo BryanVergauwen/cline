@@ -53,7 +53,6 @@ export interface ExtensionStateContextType extends ExtensionState {
 	mcpTab?: McpViewTab
 	showSettings: boolean
 	settingsTargetSection?: string
-	showHistory: boolean
 	showAccount: boolean
 	showAnnouncement: boolean
 	showChatModelSelector: boolean
@@ -97,13 +96,11 @@ export interface ExtensionStateContextType extends ExtensionState {
 	// Navigation functions
 	navigateToMcp: (tab?: McpViewTab) => void
 	navigateToSettings: (targetSection?: string) => void
-	navigateToHistory: () => void
 	navigateToAccount: () => void
 	navigateToChat: () => void
 
 	// Hide functions
 	hideSettings: () => void
-	hideHistory: () => void
 	hideAccount: () => void
 	hideAnnouncement: () => void
 	hideChatModelSelector: () => void
@@ -123,7 +120,6 @@ export const ExtensionStateContextProvider: React.FC<{
 	const [mcpTab, setMcpTab] = useState<McpViewTab | undefined>(undefined)
 	const [showSettings, setShowSettings] = useState(false)
 	const [settingsTargetSection, setSettingsTargetSection] = useState<string | undefined>(undefined)
-	const [showHistory, setShowHistory] = useState(false)
 	const [showAccount, setShowAccount] = useState(false)
 	const [showAnnouncement, setShowAnnouncement] = useState(false)
 	const [showChatModelSelector, setShowChatModelSelector] = useState(false)
@@ -139,7 +135,6 @@ export const ExtensionStateContextProvider: React.FC<{
 		setShowSettings(false)
 		setSettingsTargetSection(undefined)
 	}, [])
-	const hideHistory = useCallback(() => setShowHistory(false), [setShowHistory])
 	const hideAccount = useCallback(() => setShowAccount(false), [setShowAccount])
 	const hideAnnouncement = useCallback(() => setShowAnnouncement(false), [setShowAnnouncement])
 	const hideChatModelSelector = useCallback(() => setShowChatModelSelector(false), [setShowChatModelSelector])
@@ -148,19 +143,17 @@ export const ExtensionStateContextProvider: React.FC<{
 	const navigateToMcp = useCallback(
 		(tab?: McpViewTab) => {
 			setShowSettings(false)
-			setShowHistory(false)
 			setShowAccount(false)
 			if (tab) {
 				setMcpTab(tab)
 			}
 			setShowMcp(true)
 		},
-		[setShowMcp, setMcpTab, setShowSettings, setShowHistory, setShowAccount],
+		[setShowMcp, setMcpTab, setShowSettings, setShowAccount],
 	)
 
 	const navigateToSettings = useCallback(
 		(targetSection?: string) => {
-			setShowHistory(false)
 			closeMcpView()
 			setShowAccount(false)
 			setSettingsTargetSection(targetSection)
@@ -169,26 +162,17 @@ export const ExtensionStateContextProvider: React.FC<{
 		[closeMcpView],
 	)
 
-	const navigateToHistory = useCallback(() => {
-		setShowSettings(false)
-		closeMcpView()
-		setShowAccount(false)
-		setShowHistory(true)
-	}, [setShowSettings, closeMcpView, setShowAccount, setShowHistory])
-
 	const navigateToAccount = useCallback(() => {
 		setShowSettings(false)
 		closeMcpView()
-		setShowHistory(false)
 		setShowAccount(false)
-	}, [setShowSettings, closeMcpView, setShowHistory, setShowAccount])
+	}, [setShowSettings, closeMcpView, setShowAccount])
 
 	const navigateToChat = useCallback(() => {
 		setShowSettings(false)
 		closeMcpView()
-		setShowHistory(false)
 		setShowAccount(false)
-	}, [setShowSettings, closeMcpView, setShowHistory, setShowAccount])
+	}, [setShowSettings, closeMcpView, setShowAccount])
 
 	const [state, setState] = useState<ExtensionState>({
 		version: "",
@@ -286,7 +270,6 @@ export const ExtensionStateContextProvider: React.FC<{
 	// Reference for focusChatInput subscription
 	const focusChatInputUnsubscribeRef = useRef<(() => void) | null>(null)
 	const mcpButtonUnsubscribeRef = useRef<(() => void) | null>(null)
-	const historyButtonClickedSubscriptionRef = useRef<(() => void) | null>(null)
 	const chatButtonUnsubscribeRef = useRef<(() => void) | null>(null)
 	const accountButtonClickedSubscriptionRef = useRef<(() => void) | null>(null)
 	const settingsButtonClickedSubscriptionRef = useRef<(() => void) | null>(null)
@@ -378,24 +361,6 @@ export const ExtensionStateContextProvider: React.FC<{
 				},
 				onComplete: () => {
 					console.log("mcpButtonClicked subscription completed")
-				},
-			},
-		)
-
-		// Set up history button clicked subscription with webview type
-		historyButtonClickedSubscriptionRef.current = UiServiceClient.subscribeToHistoryButtonClicked(
-			{},
-			{
-				onResponse: () => {
-					// When history button is clicked, navigate to history view
-					console.log("[DEBUG] Received history button clicked event from gRPC stream")
-					navigateToHistory()
-				},
-				onError: (error) => {
-					console.error("Error in history button clicked subscription:", error)
-				},
-				onComplete: () => {
-					console.log("History button clicked subscription completed")
 				},
 			},
 		)
@@ -608,10 +573,6 @@ export const ExtensionStateContextProvider: React.FC<{
 				mcpButtonUnsubscribeRef.current()
 				mcpButtonUnsubscribeRef.current = null
 			}
-			if (historyButtonClickedSubscriptionRef.current) {
-				historyButtonClickedSubscriptionRef.current()
-				historyButtonClickedSubscriptionRef.current = null
-			}
 			if (chatButtonUnsubscribeRef.current) {
 				chatButtonUnsubscribeRef.current()
 				chatButtonUnsubscribeRef.current = null
@@ -737,7 +698,6 @@ export const ExtensionStateContextProvider: React.FC<{
 		mcpTab,
 		showSettings,
 		settingsTargetSection,
-		showHistory,
 		showAccount,
 		showAnnouncement,
 		showChatModelSelector,
@@ -755,13 +715,11 @@ export const ExtensionStateContextProvider: React.FC<{
 		// Navigation functions
 		navigateToMcp,
 		navigateToSettings,
-		navigateToHistory,
 		navigateToAccount,
 		navigateToChat,
 
 		// Hide functions
 		hideSettings,
-		hideHistory,
 		hideAccount,
 		hideAnnouncement,
 		setShowAnnouncement,

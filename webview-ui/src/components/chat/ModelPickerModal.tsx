@@ -18,12 +18,12 @@ import { freeModels, recommendedModels } from "@/components/settings/OpenRouterM
 import { SUPPORTED_ANTHROPIC_THINKING_MODELS } from "@/components/settings/providers/AnthropicProvider"
 import { SUPPORTED_BEDROCK_THINKING_MODELS } from "@/components/settings/providers/BedrockProvider"
 import {
-    filterOpenRouterModelIds,
-    getModelsForProvider,
-    getModeSpecificFields,
-    getProviderInfo,
-    normalizeApiConfiguration,
-    syncModeConfigurations,
+	filterOpenRouterModelIds,
+	getModelsForProvider,
+	getModeSpecificFields,
+	getProviderInfo,
+	normalizeApiConfiguration,
+	syncModeConfigurations,
 } from "@/components/settings/utils/providerUtils"
 import { useApiConfigurationHandlers } from "@/components/settings/utils/useApiConfigurationHandlers"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -93,7 +93,6 @@ const ModelPickerModal: React.FC<ModelPickerModalProps> = ({ isOpen, onOpenChang
 		planActSeparateModelsSetting,
 		showSettings,
 		showMcp,
-		showHistory,
 		showAccount,
 		favoritedModelIds,
 	} = useExtensionState()
@@ -481,12 +480,12 @@ const ModelPickerModal: React.FC<ModelPickerModalProps> = ({ isOpen, onOpenChang
 		return () => document.removeEventListener("keydown", handleEscape)
 	}, [isOpen, onOpenChange])
 
-	// Close modal when navigating to other views (settings, MCP, history, account)
+	// Close modal when navigating to other views (settings, MCP, account)
 	useEffect(() => {
-		if (isOpen && (showSettings || showMcp || showHistory || showAccount)) {
+		if (isOpen && (showSettings || showMcp || showAccount)) {
 			onOpenChange(false)
 		}
-	}, [isOpen, showSettings, showMcp, showHistory, showAccount, onOpenChange])
+	}, [isOpen, showSettings, showMcp, showAccount, onOpenChange])
 
 	// Check if current model actually belongs to current provider (not auto-selected fallback)
 	const modelBelongsToProvider = useMemo(() => {

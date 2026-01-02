@@ -11,9 +11,7 @@ import os from "os"
 import * as path from "path"
 import { HostProvider } from "@/hosts/host-provider"
 import { ExtensionRegistryInfo } from "@/registry"
-import { telemetryService } from "@/services/telemetry"
 import { McpMarketplaceCatalog } from "@/shared/mcp"
-import { reconstructTaskHistory } from "../commands/reconstructTaskHistory"
 import { StateManager } from "./StateManager"
 
 /**
@@ -150,48 +148,23 @@ export async function ensureSettingsDirectoryExists(): Promise<string> {
 }
 
 export async function getSavedApiConversationHistory(taskId: string): Promise<Anthropic.MessageParam[]> {
-	const filePath = path.join(await ensureTaskDirectoryExists(taskId), GlobalFileNames.apiConversationHistory)
-	const fileExists = await fileExistsAtPath(filePath)
-	if (fileExists) {
-		return JSON.parse(await fs.readFile(filePath, "utf8"))
-	}
+	void taskId
 	return []
 }
 
 export async function saveApiConversationHistory(taskId: string, apiConversationHistory: Anthropic.MessageParam[]) {
-	try {
-		const filePath = path.join(await ensureTaskDirectoryExists(taskId), GlobalFileNames.apiConversationHistory)
-		await atomicWriteFile(filePath, JSON.stringify(apiConversationHistory))
-	} catch (error) {
-		// in the off chance this fails, we don't want to stop the task
-		console.error("Failed to save API conversation history:", error)
-	}
+	void taskId
+	void apiConversationHistory
 }
 
 export async function getSavedClineMessages(taskId: string): Promise<ClineMessage[]> {
-	const filePath = path.join(await ensureTaskDirectoryExists(taskId), GlobalFileNames.uiMessages)
-	if (await fileExistsAtPath(filePath)) {
-		return JSON.parse(await fs.readFile(filePath, "utf8"))
-	} else {
-		// check old location
-		const oldPath = path.join(await ensureTaskDirectoryExists(taskId), "claude_messages.json")
-		if (await fileExistsAtPath(oldPath)) {
-			const data = JSON.parse(await fs.readFile(oldPath, "utf8"))
-			await fs.unlink(oldPath) // remove old file
-			return data
-		}
-	}
+	void taskId
 	return []
 }
 
 export async function saveClineMessages(taskId: string, uiMessages: ClineMessage[]) {
-	try {
-		const taskDir = await ensureTaskDirectoryExists(taskId)
-		const filePath = path.join(taskDir, GlobalFileNames.uiMessages)
-		await atomicWriteFile(filePath, JSON.stringify(uiMessages))
-	} catch (error) {
-		console.error("Failed to save ui messages:", error)
-	}
+	void taskId
+	void uiMessages
 }
 
 /**
@@ -290,50 +263,15 @@ export async function getTaskHistoryStateFilePath(): Promise<string> {
 }
 
 export async function taskHistoryStateFileExists(): Promise<boolean> {
-	const filePath = await getTaskHistoryStateFilePath()
-	return fileExistsAtPath(filePath)
+	return false
 }
 
 export async function readTaskHistoryFromState(): Promise<HistoryItem[]> {
-	try {
-		const filePath = await getTaskHistoryStateFilePath()
-		if (!(await fileExistsAtPath(filePath))) {
-			return []
-		}
-
-		const contents = await fs.readFile(filePath, "utf8")
-
-		try {
-			return JSON.parse(contents)
-		} catch (parseError) {
-			telemetryService.captureExtensionStorageError(parseError, "parseError_attemptingRecovery")
-
-			const result = await reconstructTaskHistory(false)
-			if (result && result.reconstructedTasks > 0) {
-				// Read the reconstructed file
-				const newContents = await fs.readFile(filePath, "utf8")
-				return JSON.parse(newContents)
-			}
-
-			// Recovery failed, all we can do is return an empty array or throw an error, thus preventing the app from starting up
-			// This will wipe out the taskHistory
-			return []
-		}
-	} catch (error) {
-		// Filesystem or other errors - throw them for the caller to handle
-		telemetryService.captureExtensionStorageError(error, "readTaskHistoryFromState")
-		throw error
-	}
+	return []
 }
 
 export async function writeTaskHistoryToState(items: HistoryItem[]): Promise<void> {
-	try {
-		const filePath = await getTaskHistoryStateFilePath()
-		await atomicWriteFile(filePath, JSON.stringify(items))
-	} catch (error) {
-		console.error("[Disk] Failed to write task history:", error)
-		throw error
-	}
+	void items
 }
 
 export async function readTaskSettingsFromStorage(taskId: string): Promise<Partial<GlobalState>> {

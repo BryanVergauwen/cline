@@ -13,7 +13,6 @@ export interface ChatViewProps {
 	isHidden: boolean
 	showAnnouncement: boolean
 	hideAnnouncement: () => void
-	showHistoryView: () => void
 }
 
 /**
@@ -147,10 +146,8 @@ export interface TaskSectionProps {
 export interface WelcomeSectionProps {
 	showAnnouncement: boolean
 	hideAnnouncement: () => void
-	showHistoryView: () => void
-	telemetrySetting: string
 	version: string
-	taskHistory: any[]
+	telemetrySetting: unknown
 	shouldShowQuickWins: boolean
 }
 

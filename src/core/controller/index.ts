@@ -976,15 +976,8 @@ export class Controller {
 	*/
 
 	async updateTaskHistory(item: HistoryItem): Promise<HistoryItem[]> {
-		const history = this.stateManager.getGlobalStateKey("taskHistory")
-		const existingItemIndex = history.findIndex((h) => h.id === item.id)
-		if (existingItemIndex !== -1) {
-			history[existingItemIndex] = item
-		} else {
-			history.push(item)
-		}
-		this.stateManager.setGlobalState("taskHistory", history)
-		return history
+		void item
+		return []
 	}
 
 	/**

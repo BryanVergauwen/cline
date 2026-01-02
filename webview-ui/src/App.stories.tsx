@@ -25,12 +25,7 @@ const MockApp = () => {
 					<WelcomeView />
 				)
 			) : (
-				<ChatView
-					hideAnnouncement={() => {}}
-					isHidden={false}
-					showAnnouncement={showAnnouncement}
-					showHistoryView={() => {}}
-				/>
+				<ChatView hideAnnouncement={() => {}} isHidden={false} showAnnouncement={showAnnouncement} />
 			)}
 		</HeroUIProvider>
 	)
