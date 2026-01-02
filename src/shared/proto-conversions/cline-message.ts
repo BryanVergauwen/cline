@@ -185,8 +185,8 @@ export function convertClineMessageToProto(message: AppClineMessage): ProtoCline
 		images: message.images ?? [],
 		files: message.files ?? [],
 		partial: message.partial ?? false,
-		lastCheckpointHash: message.lastCheckpointHash ?? "",
-		isCheckpointCheckedOut: message.isCheckpointCheckedOut ?? false,
+		lastCheckpointHash: "",
+		isCheckpointCheckedOut: false,
 		isOperationOutsideWorkspace: message.isOperationOutsideWorkspace ?? false,
 		conversationHistoryIndex: message.conversationHistoryIndex ?? 0,
 		conversationHistoryDeletedRange: message.conversationHistoryDeletedRange
@@ -250,12 +250,6 @@ export function convertProtoToClineMessage(protoMessage: ProtoClineMessage): App
 	}
 	if (protoMessage.partial) {
 		message.partial = protoMessage.partial
-	}
-	if (protoMessage.lastCheckpointHash !== "") {
-		message.lastCheckpointHash = protoMessage.lastCheckpointHash
-	}
-	if (protoMessage.isCheckpointCheckedOut) {
-		message.isCheckpointCheckedOut = protoMessage.isCheckpointCheckedOut
 	}
 	if (protoMessage.isOperationOutsideWorkspace) {
 		message.isOperationOutsideWorkspace = protoMessage.isOperationOutsideWorkspace

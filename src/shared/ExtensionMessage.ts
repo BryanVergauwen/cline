@@ -118,8 +118,6 @@ export interface ClineMessage {
 	files?: string[]
 	partial?: boolean
 	commandCompleted?: boolean
-	lastCheckpointHash?: string
-	isCheckpointCheckedOut?: boolean
 	isOperationOutsideWorkspace?: boolean
 	conversationHistoryIndex?: number
 	conversationHistoryDeletedRange?: [number, number] // for when conversation history is truncated for API requests

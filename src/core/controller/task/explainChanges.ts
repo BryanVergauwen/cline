@@ -1,4 +1,3 @@
-import CheckpointTracker from "@integrations/checkpoints/CheckpointTracker"
 import { findLast } from "@shared/array"
 import { Empty } from "@shared/proto/cline/common"
 import { ExplainChangesRequest } from "@shared/proto/cline/task"
@@ -7,11 +6,11 @@ import { ShowMessageType } from "@/shared/proto/index.host"
 import { Controller } from ".."
 import { sendRelinquishControlEvent } from "../ui/subscribeToRelinquishControl"
 import {
-	buildDiffContent,
-	openDiffView,
-	setupCommentController,
-	streamAIExplanationComments,
-	stringifyConversationHistory,
+    buildDiffContent,
+    openDiffView,
+    setupCommentController,
+    streamAIExplanationComments,
+    stringifyConversationHistory,
 } from "./explainChangesShared"
 
 /**
@@ -29,103 +28,14 @@ export async function explainChanges(controller: Controller, request: ExplainCha
 	}
 
 	try {
-		// Validate we have an active task with checkpoint manager
-		if (!controller.task) {
-			HostProvider.window.showMessage({
-				type: ShowMessageType.ERROR,
-				message: "No active task",
-			})
-			relinquishButton()
-			return Empty.create({})
-		}
-
-		const checkpointManager = controller.task.checkpointManager as any
-		if (!checkpointManager) {
-			HostProvider.window.showMessage({
-				type: ShowMessageType.ERROR,
-				message: "Checkpoints not enabled",
-			})
-			relinquishButton()
-			return Empty.create({})
-		}
-
-		// Check if checkpoints are enabled
-		if (!checkpointManager.config?.enableCheckpoints) {
-			HostProvider.window.showMessage({
-				type: ShowMessageType.INFORMATION,
-				message: "Checkpoints are disabled in settings. Cannot review changes.",
-			})
-			relinquishButton()
-			return Empty.create({})
-		}
-
-		// Get message state handler
-		const messageStateHandler = checkpointManager.services?.messageStateHandler
-		if (!messageStateHandler) {
-			HostProvider.window.showMessage({
-				type: ShowMessageType.ERROR,
-				message: "Message state handler not available",
-			})
-			relinquishButton()
-			return Empty.create({})
-		}
-
-		// Find the message
-		const clineMessages = messageStateHandler.getClineMessages()
-		const messageIndex = clineMessages.findIndex((m: any) => m.ts === request.messageTs)
-		const message = clineMessages[messageIndex]
-
-		if (!message) {
-			console.error(`[explainChanges] Message not found for timestamp ${request.messageTs}`)
-			relinquishButton()
-			return Empty.create({})
-		}
-
-		const hash = message.lastCheckpointHash
-		if (!hash) {
-			console.error(`[explainChanges] No checkpoint hash found for message ${request.messageTs}`)
-			relinquishButton()
-			return Empty.create({})
-		}
-
-		// Initialize checkpoint tracker if needed (same logic as presentMultifileDiff)
-		if (
-			!checkpointManager.state?.checkpointTracker &&
-			checkpointManager.config?.enableCheckpoints &&
-			!checkpointManager.state?.checkpointManagerErrorMessage
-		) {
-			try {
-				const workspacePath = await checkpointManager.getWorkspacePath()
-				checkpointManager.state.checkpointTracker = await CheckpointTracker.create(
-					checkpointManager.task.taskId,
-					checkpointManager.config.enableCheckpoints,
-					workspacePath,
-				)
-				messageStateHandler.setCheckpointTracker(checkpointManager.state.checkpointTracker)
-			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : "Unknown error"
-				console.error(`[explainChanges] Failed to initialize checkpoint tracker:`, errorMessage)
-				checkpointManager.state.checkpointManagerErrorMessage = errorMessage
-				HostProvider.window.showMessage({
-					type: ShowMessageType.ERROR,
-					message: errorMessage,
-				})
-				relinquishButton()
-				return Empty.create({})
-			}
-		}
-
-		const checkpointTracker = checkpointManager.state?.checkpointTracker as CheckpointTracker | undefined
-		if (!checkpointTracker) {
-			console.error(`[explainChanges] Checkpoint tracker not available`)
-			HostProvider.window.showMessage({
-				type: ShowMessageType.ERROR,
-				message: "Checkpoint tracker not available",
-			})
-			relinquishButton()
-			return Empty.create({})
-		}
-
+		void request
+		void controller
+		HostProvider.window.showMessage({
+			type: ShowMessageType.INFORMATION,
+			message: "Review changes is not available because checkpoints are disabled.",
+		})
+		relinquishButton()
+		return Empty.create({})
 		// Get changed files (using seeNewChangesSinceLastTaskCompletion logic)
 		const lastTaskCompletedMessageCheckpointHash = findLast(
 			clineMessages.slice(0, messageIndex),
