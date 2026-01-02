@@ -10,7 +10,6 @@ import CopyTaskButton from "./buttons/CopyTaskButton"
 import DeleteTaskButton from "./buttons/DeleteTaskButton"
 import NewTaskButton from "./buttons/NewTaskButton"
 import OpenDiskConversationHistoryButton from "./buttons/OpenDiskConversationHistoryButton"
-import { CheckpointError } from "./CheckpointError"
 import ContextWindow from "./ContextWindow"
 import { FocusChain } from "./FocusChain"
 import { highlightText } from "./Highlights"
@@ -47,8 +46,6 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 	const {
 		apiConfiguration,
 		currentTaskItem,
-		checkpointManagerErrorMessage,
-		navigateToSettings,
 		mode,
 		expandTaskHeader: isTaskExpanded,
 		setExpandTaskHeader: setIsTaskExpanded,
@@ -100,19 +97,10 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 	// Event handlers
 	const toggleTaskExpanded = useCallback(() => setIsTaskExpanded(!isTaskExpanded), [setIsTaskExpanded, isTaskExpanded])
 
-	const handleCheckpointSettingsClick = useCallback(() => {
-		navigateToSettings("features")
-	}, [navigateToSettings])
-
 	const environmentBorderColor = getEnvironmentColor(environment, "border")
 
 	return (
 		<div className="pt-2 pb-2 pl-[15px] pr-[14px] flex flex-col gap-2">
-			{/* Display Checkpoint Error */}
-			<CheckpointError
-				checkpointManagerErrorMessage={checkpointManagerErrorMessage}
-				handleCheckpointSettingsClick={handleCheckpointSettingsClick}
-			/>
 			{/* Task Header */}
 			<div
 				className={cn(

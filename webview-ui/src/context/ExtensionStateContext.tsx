@@ -16,15 +16,15 @@ import type React from "react"
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react"
 import { Environment } from "../../../src/config"
 import {
-    basetenDefaultModelId,
-    basetenModels,
-    groqDefaultModelId,
-    groqModels,
-    type ModelInfo,
-    openRouterDefaultModelId,
-    openRouterDefaultModelInfo,
-    requestyDefaultModelId,
-    requestyDefaultModelInfo,
+	basetenDefaultModelId,
+	basetenModels,
+	groqDefaultModelId,
+	groqModels,
+	type ModelInfo,
+	openRouterDefaultModelId,
+	openRouterDefaultModelInfo,
+	requestyDefaultModelId,
+	requestyDefaultModelInfo,
 } from "../../../src/shared/api"
 import type { McpMarketplaceCatalog, McpServer, McpViewTab } from "../../../src/shared/mcp"
 import { McpServiceClient, ModelsServiceClient, StateServiceClient, UiServiceClient } from "../services/grpc-client"
@@ -207,7 +207,6 @@ export const ExtensionStateContextProvider: React.FC<{
 		telemetrySetting: "unset",
 		distinctId: "",
 		planActSeparateModelsSetting: true,
-		enableCheckpointsSetting: true,
 		mcpDisplayMode: DEFAULT_MCP_DISPLAY_MODE,
 		globalClineRulesToggles: {},
 		localClineRulesToggles: {},
@@ -751,7 +750,6 @@ export const ExtensionStateContextProvider: React.FC<{
 		globalWorkflowToggles: state.globalWorkflowToggles || {},
 		remoteRulesToggles: state.remoteRulesToggles || {},
 		remoteWorkflowToggles: state.remoteWorkflowToggles || {},
-		enableCheckpointsSetting: state.enableCheckpointsSetting,
 		currentFocusChainChecklist: state.currentFocusChainChecklist,
 
 		// Navigation functions

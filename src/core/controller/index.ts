@@ -828,7 +828,6 @@ export class Controller {
 		const mcpDisplayMode = this.stateManager.getGlobalStateKey("mcpDisplayMode")
 		const telemetrySetting = this.stateManager.getGlobalSettingsKey("telemetrySetting")
 		const planActSeparateModelsSetting = this.stateManager.getGlobalSettingsKey("planActSeparateModelsSetting")
-		const enableCheckpointsSetting = this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting")
 		const globalClineRulesToggles = this.stateManager.getGlobalSettingsKey("globalClineRulesToggles")
 		const globalWorkflowToggles = this.stateManager.getGlobalSettingsKey("globalWorkflowToggles")
 		const remoteRulesToggles = this.stateManager.getGlobalStateKey("remoteRulesToggles")
@@ -861,7 +860,6 @@ export class Controller {
 
 		const currentTaskItem = this.task?.taskId ? (taskHistory || []).find((item) => item.id === this.task?.taskId) : undefined
 		const clineMessages = this.task?.messageStateHandler.getClineMessages() || []
-		const checkpointManagerErrorMessage = this.task?.taskState.checkpointManagerErrorMessage
 
 		const processedTaskHistory = (taskHistory || [])
 			.filter((item) => item.ts && item.task)
@@ -887,7 +885,6 @@ export class Controller {
 			currentTaskItem,
 			clineMessages,
 			currentFocusChainChecklist: this.task?.taskState.currentFocusChainChecklist || null,
-			checkpointManagerErrorMessage,
 			autoApprovalSettings,
 			browserSettings,
 			focusChainSettings,
@@ -903,7 +900,6 @@ export class Controller {
 			mcpDisplayMode,
 			telemetrySetting,
 			planActSeparateModelsSetting,
-			enableCheckpointsSetting: enableCheckpointsSetting ?? true,
 			platform,
 			environment,
 			distinctId,

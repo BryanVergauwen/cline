@@ -18,8 +18,6 @@ import { useSize } from "react-use"
 import styled from "styled-components"
 import { OptionsButtons } from "@/components/chat/OptionsButtons"
 import TaskFeedbackButtons from "@/components/chat/TaskFeedbackButtons"
-import { CheckmarkControl } from "@/components/common/CheckmarkControl"
-import { CheckpointControls } from "@/components/common/CheckpointControls"
 import CodeBlock, {
 	CHAT_ROW_EXPANDED_BG_COLOR,
 	CODE_BLOCK_BG_COLOR,
@@ -55,10 +53,6 @@ const _cancelledColor = "var(--vscode-descriptionForeground)"
 const ChatRowContainer = styled.div`
 	padding: 10px 6px 10px 15px;
 	position: relative;
-
-	&:hover ${CheckpointControls} {
-		opacity: 1;
-	}
 
 	/* Fade-in animation for hook messages being inserted */
 	&.hook-message-animate {
@@ -458,7 +452,7 @@ export const ChatRowContent = memo(
 								color: errorColor,
 								marginBottom: "-1.5px",
 							}}></span>,
-						<span style={{ color: errorColor, fontWeight: "bold" }}>Cline is having trouble...</span>,
+						<span style={{ color: errorColor, fontWeight: "bold" }}>Having trouble...</span>,
 					]
 				case "command":
 					return [
@@ -468,7 +462,7 @@ export const ChatRowContent = memo(
 								color: normalColor,
 								marginBottom: "-1.5px",
 							}}></span>,
-						<span style={{ color: normalColor, fontWeight: "bold" }}>Cline wants to execute this command:</span>,
+						<span style={{ color: normalColor, fontWeight: "bold" }}>Run command:</span>,
 					]
 				case "use_mcp_server":
 					const mcpServerUse = JSON.parse(message.text || "{}") as ClineAskUseMcpServer
@@ -486,11 +480,11 @@ export const ChatRowContent = memo(
 						<span
 							className="ph-no-capture"
 							style={{ color: normalColor, fontWeight: "bold", wordBreak: "break-word" }}>
-							Cline wants to {mcpServerUse.type === "use_mcp_tool" ? "use a tool" : "access a resource"} on the{" "}
+							MCP: {mcpServerUse.type === "use_mcp_tool" ? "Use tool" : "Access resource"} on{" "}
 							<code style={{ wordBreak: "break-all" }}>
 								{getMcpServerDisplayName(mcpServerUse.serverName, mcpMarketplaceCatalog)}
 							</code>{" "}
-							MCP server:
+							server:
 						</span>,
 					]
 				case "completion_result":
@@ -518,7 +512,7 @@ export const ChatRowContent = memo(
 								color: normalColor,
 								marginBottom: "-1.5px",
 							}}></span>,
-						<span style={{ color: normalColor, fontWeight: "bold" }}>Cline has a question:</span>,
+						<span style={{ color: normalColor, fontWeight: "bold" }}>Question:</span>,
 					]
 				default:
 					return [null, null]
@@ -583,9 +577,7 @@ export const ChatRowContent = memo(
 				case "editedExistingFile":
 					const content = tool?.content || ""
 					const isApplyingPatch = content?.startsWith("%%bash") && !content.endsWith("*** End Patch\nEOF")
-					const editToolTitle = isApplyingPatch
-						? "Cline is creating patches to edit this file:"
-						: "Cline wants to edit this file:"
+					const editToolTitle = isApplyingPatch ? "Preparing changes:" : "Edit file:"
 					return (
 						<>
 							<div style={headerStyle}>
@@ -614,7 +606,7 @@ export const ChatRowContent = memo(
 								{toolIcon("diff-removed")}
 								{tool.operationIsLocatedInWorkspace === false &&
 									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
-								<span style={{ fontWeight: "bold" }}>Cline wants to delete this file:</span>
+								<span style={{ fontWeight: "bold" }}>Delete file:</span>
 							</div>
 							<CodeAccordian
 								// isLoading={message.partial}
@@ -632,7 +624,7 @@ export const ChatRowContent = memo(
 								{toolIcon("new-file")}
 								{tool.operationIsLocatedInWorkspace === false &&
 									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
-								<span style={{ fontWeight: "bold" }}>Cline wants to create a new file:</span>
+								<span style={{ fontWeight: "bold" }}>Create file:</span>
 							</div>
 							{backgroundEditEnabled && tool.path && tool.content ? (
 								<DiffEditRow patch={tool.content} path={tool.path} />
@@ -657,7 +649,7 @@ export const ChatRowContent = memo(
 									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
 								<span style={{ fontWeight: "bold" }}>
 									{/* {message.type === "ask" ? "" : "Cline read this file:"} */}
-									Cline wants to read this file:
+									Read file:
 								</span>
 							</div>
 							<div
@@ -723,9 +715,7 @@ export const ChatRowContent = memo(
 								{tool.operationIsLocatedInWorkspace === false &&
 									toolIcon("sign-out", "yellow", -90, "This is outside of your workspace")}
 								<span style={{ fontWeight: "bold" }}>
-									{message.type === "ask"
-										? "Cline wants to view the top level files in this directory:"
-										: "Cline viewed the top level files in this directory:"}
+									{message.type === "ask" ? "List files (top-level):" : "Listed files (top-level):"}
 								</span>
 							</div>
 							<CodeAccordian
@@ -745,9 +735,7 @@ export const ChatRowContent = memo(
 								{tool.operationIsLocatedInWorkspace === false &&
 									toolIcon("sign-out", "yellow", -90, "This is outside of your workspace")}
 								<span style={{ fontWeight: "bold" }}>
-									{message.type === "ask"
-										? "Cline wants to recursively view all files in this directory:"
-										: "Cline recursively viewed all files in this directory:"}
+									{message.type === "ask" ? "List files (recursive):" : "Listed files (recursive):"}
 								</span>
 							</div>
 							<CodeAccordian
@@ -767,9 +755,7 @@ export const ChatRowContent = memo(
 								{tool.operationIsLocatedInWorkspace === false &&
 									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
 								<span style={{ fontWeight: "bold" }}>
-									{message.type === "ask"
-										? "Cline wants to view source code definition names used in this directory:"
-										: "Cline viewed source code definition names used in this directory:"}
+									{message.type === "ask" ? "List code definitions:" : "Listed code definitions:"}
 								</span>
 							</div>
 							<CodeAccordian
@@ -788,8 +774,7 @@ export const ChatRowContent = memo(
 								{tool.operationIsLocatedInWorkspace === false &&
 									toolIcon("sign-out", "yellow", -90, "This is outside of your workspace")}
 								<span style={{ fontWeight: "bold" }}>
-									Cline wants to search this directory for{" "}
-									<code style={{ wordBreak: "break-all" }}>{tool.regex}</code>:
+									Search in directory for <code style={{ wordBreak: "break-all" }}>{tool.regex}</code>:
 								</span>
 							</div>
 							<SearchResultsDisplay
@@ -808,7 +793,7 @@ export const ChatRowContent = memo(
 								<span style={{ color: normalColor, marginBottom: "-1.5px" }}>
 									<FoldVerticalIcon size={16} />
 								</span>
-								<span style={{ fontWeight: "bold" }}>Cline is condensing the conversation:</span>
+								<span style={{ fontWeight: "bold" }}>Compacting conversation:</span>
 							</div>
 							<div
 								style={{
@@ -897,9 +882,7 @@ export const ChatRowContent = memo(
 								{tool.operationIsLocatedInWorkspace === false &&
 									toolIcon("sign-out", "yellow", -90, "This URL is external")}
 								<span style={{ fontWeight: "bold" }}>
-									{message.type === "ask"
-										? "Cline wants to fetch content from this URL:"
-										: "Cline fetched content from this URL:"}
+									{message.type === "ask" ? "Fetch URL content:" : "Fetched URL content:"}
 								</span>
 							</div>
 							<div
@@ -952,9 +935,7 @@ export const ChatRowContent = memo(
 								{tool.operationIsLocatedInWorkspace === false &&
 									toolIcon("sign-out", "yellow", -90, "This search is external")}
 								<span style={{ fontWeight: "bold" }}>
-									{message.type === "ask"
-										? "Cline wants to search the web for:"
-										: "Cline searched the web for:"}
+									{message.type === "ask" ? "Search the web for:" : "Searched the web for:"}
 								</span>
 							</div>
 							<div
@@ -1089,7 +1070,7 @@ export const ChatRowContent = memo(
 			)
 
 			const displayTitle = isSubagentCommand ? (
-				<span style={{ color: normalColor, fontWeight: "bold" }}>Cline wants to use a subagent:</span>
+				<span style={{ color: normalColor, fontWeight: "bold" }}>Run helper task:</span>
 			) : (
 				title
 			)
@@ -1351,7 +1332,7 @@ export const ChatRowContent = memo(
 						return (
 							<>
 								<div
-									aria-label={isExpanded ? "Collapse API request" : "Expand API request"}
+									aria-label={isExpanded ? "Collapse request" : "Expand request"}
 									onClick={handleToggle}
 									onKeyDown={(e) => {
 										if (e.key === "Enter" || e.key === " ") {
@@ -1567,7 +1548,7 @@ export const ChatRowContent = memo(
 					case "clineignore_error":
 						return <ErrorRow errorType="clineignore_error" message={message} />
 					case "checkpoint_created":
-						return <CheckmarkControl isCheckpointCheckedOut={message.isCheckpointCheckedOut} messageTs={message.ts} />
+						return null
 					case "load_mcp_documentation":
 						return (
 							<div
@@ -2162,9 +2143,7 @@ export const ChatRowContent = memo(
 											color: normalColor,
 											marginBottom: "-1.5px",
 										}}></span>
-									<span style={{ color: normalColor, fontWeight: "bold" }}>
-										Cline wants to start a new task:
-									</span>
+									<span style={{ color: normalColor, fontWeight: "bold" }}>Start new task:</span>
 								</div>
 								<NewTaskPreview context={message.text || ""} />
 							</>
@@ -2179,9 +2158,7 @@ export const ChatRowContent = memo(
 											color: normalColor,
 											marginBottom: "-1.5px",
 										}}></span>
-									<span style={{ color: normalColor, fontWeight: "bold" }}>
-										Cline wants to condense your conversation:
-									</span>
+									<span style={{ color: normalColor, fontWeight: "bold" }}>Compact conversation:</span>
 								</div>
 								<NewTaskPreview context={message.text || ""} />
 							</>
@@ -2196,9 +2173,7 @@ export const ChatRowContent = memo(
 											color: normalColor,
 											marginBottom: "-1.5px",
 										}}></span>
-									<span style={{ color: normalColor, fontWeight: "bold" }}>
-										Cline wants to create a Github issue:
-									</span>
+									<span style={{ color: normalColor, fontWeight: "bold" }}>Create GitHub issue:</span>
 								</div>
 								<ReportBugPreview data={message.text || ""} />
 							</>

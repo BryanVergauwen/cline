@@ -97,7 +97,6 @@ export interface Settings {
 	telemetrySetting: TelemetrySetting
 	asksageApiUrl: string | undefined
 	planActSeparateModelsSetting: boolean
-	enableCheckpointsSetting: boolean
 	requestTimeoutMs: number | undefined
 	shellIntegrationTimeout: number
 	defaultTerminalProfile: string

@@ -234,8 +234,6 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 		const requestTimeoutMs = context.globalState.get<GlobalStateAndSettings["requestTimeoutMs"]>("requestTimeoutMs")
 		const shellIntegrationTimeout =
 			context.globalState.get<GlobalStateAndSettings["shellIntegrationTimeout"]>("shellIntegrationTimeout")
-		const enableCheckpointsSettingRaw =
-			context.globalState.get<GlobalStateAndSettings["enableCheckpointsSetting"]>("enableCheckpointsSetting")
 		const mcpMarketplaceEnabledRaw =
 			context.globalState.get<GlobalStateAndSettings["mcpMarketplaceEnabled"]>("mcpMarketplaceEnabled")
 		const mcpDisplayMode = context.globalState.get<GlobalStateAndSettings["mcpDisplayMode"]>("mcpDisplayMode")
@@ -678,7 +676,6 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 			mcpResponsesCollapsed: mcpResponsesCollapsed,
 			telemetrySetting: telemetrySetting || "unset",
 			planActSeparateModelsSetting: planActSeparateModelsSetting ?? false,
-			enableCheckpointsSetting: enableCheckpointsSettingRaw ?? true,
 			shellIntegrationTimeout: shellIntegrationTimeout || 4000,
 			terminalReuseEnabled: terminalReuseEnabled ?? true,
 			vscodeTerminalExecutionMode: vscodeTerminalExecutionMode ?? "vscodeTerminal",

@@ -48,14 +48,12 @@ export interface ExtensionState {
 	preferredLanguage?: string
 	openaiReasoningEffort?: OpenaiReasoningEffort
 	mode: Mode
-	checkpointManagerErrorMessage?: string
 	clineMessages: ClineMessage[]
 	currentTaskItem?: HistoryItem
 	currentFocusChainChecklist?: string | null
 	mcpMarketplaceEnabled?: boolean
 	mcpDisplayMode: McpDisplayMode
 	planActSeparateModelsSetting: boolean
-	enableCheckpointsSetting?: boolean
 	platform: Platform
 	environment?: Environment
 	shouldShowAnnouncement: boolean
