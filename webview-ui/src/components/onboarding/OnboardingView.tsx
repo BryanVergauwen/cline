@@ -269,7 +269,7 @@ const OnboardingStepContent = ({
 }
 
 const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingModelGroup }) => {
-	const { openRouterModels, hideAccount, setShowWelcome } = useExtensionState()
+	const { openRouterModels, setShowWelcome } = useExtensionState()
 
 	const [stepNumber, setStepNumber] = useState(0)
 	const [isActionLoading, setIsActionLoading] = useState(false)
@@ -306,15 +306,11 @@ const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingMode
 		StateServiceClient.captureOnboardingProgress({ step: 1, modelSelected, action: "model_selected" })
 	}, [])
 
-	const finishOnboarding = useCallback(
-		async (updateModelId: boolean, step: number) => {
-			const modelSelected = (updateModelId && selectedModelId) || undefined
-			hideAccount()
-			const action = "onboarding_completed"
-			StateServiceClient.captureOnboardingProgress({ step, modelSelected, action, completed: true })
-		},
-		[hideAccount],
-	)
+	const finishOnboarding = useCallback(async (updateModelId: boolean, step: number) => {
+		const modelSelected = (updateModelId && selectedModelId) || undefined
+		const action = "onboarding_completed"
+		StateServiceClient.captureOnboardingProgress({ step, modelSelected, action, completed: true })
+	}, [])
 
 	const handleFooterAction = useCallback(
 		async (action: "signin" | "next" | "back" | "done" | "signup") => {

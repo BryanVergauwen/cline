@@ -12,7 +12,6 @@ const AppContent = () => {
 		shouldShowAnnouncement,
 		showMcp,
 		mcpTab,
-		showAccount,
 		showAnnouncement,
 		setShowAnnouncement,
 		setShouldShowAnnouncement,
@@ -43,7 +42,7 @@ const AppContent = () => {
 		<div className="flex h-screen w-full flex-col">
 			{showMcp && <McpView initialTab={mcpTab} onDone={closeMcpView} />}
 			{/* Do not conditionally load ChatView, it's expensive and there's state we don't want to lose (user input, disableInput, askResponse promise, etc.) */}
-			<ChatView hideAnnouncement={hideAnnouncement} isHidden={showMcp || showAccount} showAnnouncement={showAnnouncement} />
+			<ChatView hideAnnouncement={hideAnnouncement} isHidden={showMcp} showAnnouncement={showAnnouncement} />
 		</div>
 	)
 }

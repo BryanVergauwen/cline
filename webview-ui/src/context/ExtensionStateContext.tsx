@@ -51,7 +51,6 @@ export interface ExtensionStateContextType extends ExtensionState {
 	// View state
 	showMcp: boolean
 	mcpTab?: McpViewTab
-	showAccount: boolean
 	showAnnouncement: boolean
 	showChatModelSelector: boolean
 	expandTaskHeader: boolean
@@ -93,11 +92,9 @@ export interface ExtensionStateContextType extends ExtensionState {
 
 	// Navigation functions
 	navigateToMcp: (tab?: McpViewTab) => void
-	navigateToAccount: () => void
 	navigateToChat: () => void
 
 	// Hide functions
-	hideAccount: () => void
 	hideAnnouncement: () => void
 	hideChatModelSelector: () => void
 	closeMcpView: () => void
@@ -114,7 +111,6 @@ export const ExtensionStateContextProvider: React.FC<{
 	// UI view state
 	const [showMcp, setShowMcp] = useState(false)
 	const [mcpTab, setMcpTab] = useState<McpViewTab | undefined>(undefined)
-	const [showAccount, setShowAccount] = useState(false)
 	const [showAnnouncement, setShowAnnouncement] = useState(false)
 	const [showChatModelSelector, setShowChatModelSelector] = useState(false)
 
@@ -125,31 +121,23 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [setShowMcp, setMcpTab])
 
 	// Hide functions
-	const hideAccount = useCallback(() => setShowAccount(false), [setShowAccount])
 	const hideAnnouncement = useCallback(() => setShowAnnouncement(false), [setShowAnnouncement])
 	const hideChatModelSelector = useCallback(() => setShowChatModelSelector(false), [setShowChatModelSelector])
 
 	// Navigation functions
 	const navigateToMcp = useCallback(
 		(tab?: McpViewTab) => {
-			setShowAccount(false)
 			if (tab) {
 				setMcpTab(tab)
 			}
 			setShowMcp(true)
 		},
-		[setShowMcp, setMcpTab, setShowAccount],
+		[setShowMcp, setMcpTab],
 	)
-
-	const navigateToAccount = useCallback(() => {
-		closeMcpView()
-		setShowAccount(false)
-	}, [closeMcpView, setShowAccount])
 
 	const navigateToChat = useCallback(() => {
 		closeMcpView()
-		setShowAccount(false)
-	}, [closeMcpView, setShowAccount])
+	}, [closeMcpView])
 
 	const [state, setState] = useState<ExtensionState>({
 		version: "",
@@ -248,7 +236,6 @@ export const ExtensionStateContextProvider: React.FC<{
 	const focusChatInputUnsubscribeRef = useRef<(() => void) | null>(null)
 	const mcpButtonUnsubscribeRef = useRef<(() => void) | null>(null)
 	const chatButtonUnsubscribeRef = useRef<(() => void) | null>(null)
-	const accountButtonClickedSubscriptionRef = useRef<(() => void) | null>(null)
 	const partialMessageUnsubscribeRef = useRef<(() => void) | null>(null)
 	const mcpMarketplaceUnsubscribeRef = useRef<(() => void) | null>(null)
 	const openRouterModelsUnsubscribeRef = useRef<(() => void) | null>(null)
@@ -472,21 +459,6 @@ export const ExtensionStateContextProvider: React.FC<{
 				console.error("Failed to initialize webview via gRPC:", error)
 			})
 
-		// Set up account button clicked subscription
-		accountButtonClickedSubscriptionRef.current = UiServiceClient.subscribeToAccountButtonClicked(EmptyRequest.create(), {
-			onResponse: () => {
-				// Account view is disabled in this build
-				console.log("[DEBUG] Received account button clicked event from gRPC stream")
-				navigateToChat()
-			},
-			onError: (error) => {
-				console.error("Error in account button clicked subscription:", error)
-			},
-			onComplete: () => {
-				console.log("Account button clicked subscription completed")
-			},
-		})
-
 		// Fetch available terminal profiles on launch
 		StateServiceClient.getAvailableTerminalProfiles(EmptyRequest.create({}))
 			.then((response) => {
@@ -538,10 +510,6 @@ export const ExtensionStateContextProvider: React.FC<{
 			if (chatButtonUnsubscribeRef.current) {
 				chatButtonUnsubscribeRef.current()
 				chatButtonUnsubscribeRef.current = null
-			}
-			if (accountButtonClickedSubscriptionRef.current) {
-				accountButtonClickedSubscriptionRef.current()
-				accountButtonClickedSubscriptionRef.current = null
 			}
 			if (partialMessageUnsubscribeRef.current) {
 				partialMessageUnsubscribeRef.current()
@@ -654,7 +622,6 @@ export const ExtensionStateContextProvider: React.FC<{
 		availableTerminalProfiles,
 		showMcp,
 		mcpTab,
-		showAccount,
 		showAnnouncement,
 		showChatModelSelector,
 		globalClineRulesToggles: state.globalClineRulesToggles || {},
@@ -670,11 +637,9 @@ export const ExtensionStateContextProvider: React.FC<{
 
 		// Navigation functions
 		navigateToMcp,
-		navigateToAccount,
 		navigateToChat,
 
 		// Hide functions
-		hideAccount,
 		hideAnnouncement,
 		setShowAnnouncement,
 		hideChatModelSelector,
