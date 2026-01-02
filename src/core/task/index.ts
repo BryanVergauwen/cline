@@ -9,15 +9,15 @@ import { EnvironmentContextTracker } from "@core/context/context-tracking/Enviro
 import { FileContextTracker } from "@core/context/context-tracking/FileContextTracker"
 import { ModelContextTracker } from "@core/context/context-tracking/ModelContextTracker"
 import {
-    getGlobalClineRules,
-    getLocalClineRules,
-    refreshClineRulesToggles,
+	getGlobalClineRules,
+	getLocalClineRules,
+	refreshClineRulesToggles,
 } from "@core/context/instructions/user-instructions/cline-rules"
 import {
-    getLocalAgentsRules,
-    getLocalCursorRules,
-    getLocalWindsurfRules,
-    refreshExternalRulesToggles,
+	getLocalAgentsRules,
+	getLocalCursorRules,
+	getLocalWindsurfRules,
+	refreshExternalRulesToggles,
 } from "@core/context/instructions/user-instructions/external-rules"
 import { sendPartialMessageEvent } from "@core/controller/ui/subscribeToPartialMessage"
 import { executePreCompactHookWithCleanup, HookCancellationError, HookExecution } from "@core/hooks/precompact-executor"
@@ -26,11 +26,11 @@ import { summarizeTask } from "@core/prompts/contextManagement"
 import { formatResponse } from "@core/prompts/responses"
 import { parseSlashCommands } from "@core/slash-commands"
 import {
-    ensureRulesDirectoryExists,
-    ensureTaskDirectoryExists,
-    GlobalFileNames,
-    getSavedApiConversationHistory,
-    getSavedClineMessages,
+	ensureRulesDirectoryExists,
+	ensureTaskDirectoryExists,
+	GlobalFileNames,
+	getSavedApiConversationHistory,
+	getSavedClineMessages,
 } from "@core/storage/disk"
 import { releaseTaskLock } from "@core/task/TaskLockUtils"
 import { isMultiRootEnabled } from "@core/workspace/multi-root-utils"
@@ -69,22 +69,22 @@ import { getSystemPrompt } from "@/core/prompts/system-prompt"
 import { HostProvider } from "@/hosts/host-provider"
 import { FileEditProvider } from "@/integrations/editor/FileEditProvider"
 import {
-    CommandExecutor,
-    CommandExecutorCallbacks,
-    FullCommandExecutorConfig,
-    StandaloneTerminalManager,
+	CommandExecutor,
+	CommandExecutorCallbacks,
+	FullCommandExecutorConfig,
+	StandaloneTerminalManager,
 } from "@/integrations/terminal"
 import { ClineError, ClineErrorType, ErrorService } from "@/services/error"
 import { telemetryService } from "@/services/telemetry"
 import {
-    ClineAssistantContent,
-    ClineContent,
-    ClineImageContentBlock,
-    ClineMessageModelInfo,
-    ClineStorageMessage,
-    ClineTextContentBlock,
-    ClineToolResponseContent,
-    ClineUserContent,
+	ClineAssistantContent,
+	ClineContent,
+	ClineImageContentBlock,
+	ClineMessageModelInfo,
+	ClineStorageMessage,
+	ClineTextContentBlock,
+	ClineToolResponseContent,
+	ClineUserContent,
 } from "@/shared/messages"
 import { isClineCliInstalled, isCliSubagentContext } from "@/utils/cli-detector"
 import { ensureLocalClineDirExists } from "../context/instructions/user-instructions/rule-helpers"
@@ -101,6 +101,11 @@ import { detectAvailableCliTools, extractProviderDomainFromUrl, updateApiReqMsg 
 import { buildUserFeedbackContent } from "./utils/buildUserFeedbackContent"
 
 export type ToolResponse = ClineToolResponseContent
+
+type ICheckpointManager = {
+	presentMultifileDiff?: (messageTs: number, seeNewChangesSinceLastTaskCompletion: boolean) => Promise<void>
+	getShadowGitConfigWorkTree?: () => Promise<string | undefined>
+}
 
 type TaskParams = {
 	controller: Controller
@@ -2234,7 +2239,6 @@ export class Task {
 		})
 
 		telemetryService.captureConversationTurnEvent(this.ulid, providerId, model.id, "user", modelInfo.mode)
-
 
 		// since we sent off a placeholder api_req_started message to update the webview while waiting to actually start the API request (to load potential details for example), we need to update the text of that message
 		const lastApiReqIndex = findLastIndex(this.messageStateHandler.getClineMessages(), (m) => m.say === "api_req_started")

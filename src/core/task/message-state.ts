@@ -1,4 +1,3 @@
-import CheckpointTracker from "@integrations/checkpoints/CheckpointTracker"
 import getFolderSize from "get-folder-size"
 import Mutex from "p-mutex"
 import { findLastIndex } from "@/shared/array"
@@ -18,14 +17,12 @@ interface MessageStateHandlerParams {
 	taskIsFavorited?: boolean
 	updateTaskHistory: (historyItem: HistoryItem) => Promise<HistoryItem[]>
 	taskState: TaskState
-	checkpointManagerErrorMessage?: string
 }
 
 export class MessageStateHandler {
 	private apiConversationHistory: ClineStorageMessage[] = []
 	private clineMessages: ClineMessage[] = []
 	private taskIsFavorited: boolean
-	private checkpointTracker: CheckpointTracker | undefined
 	private updateTaskHistory: (historyItem: HistoryItem) => Promise<HistoryItem[]>
 	private taskId: string
 	private ulid: string
@@ -43,10 +40,6 @@ export class MessageStateHandler {
 		this.taskState = params.taskState
 		this.taskIsFavorited = params.taskIsFavorited ?? false
 		this.updateTaskHistory = params.updateTaskHistory
-	}
-
-	setCheckpointTracker(tracker: CheckpointTracker | undefined) {
-		this.checkpointTracker = tracker
 	}
 
 	/**
@@ -115,7 +108,7 @@ export class MessageStateHandler {
 				cacheReads: apiMetrics.totalCacheReads,
 				totalCost: apiMetrics.totalCost,
 				size: taskDirSize,
-				shadowGitConfigWorkTree: await this.checkpointTracker?.getShadowGitConfigWorkTree(),
+				shadowGitConfigWorkTree: undefined,
 				cwdOnTaskInitialization: cwd,
 				conversationHistoryDeletedRange: this.taskState.conversationHistoryDeletedRange,
 				isFavorited: this.taskIsFavorited,
