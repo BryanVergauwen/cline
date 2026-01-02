@@ -6,7 +6,6 @@ import { DIFF_VIEW_URI_SCHEME } from "@hosts/vscode/VscodeDiffViewProvider"
 import * as vscode from "vscode"
 import { sendAccountButtonClickedEvent } from "./core/controller/ui/subscribeToAccountButtonClicked"
 import { sendChatButtonClickedEvent } from "./core/controller/ui/subscribeToChatButtonClicked"
-import { sendHistoryButtonClickedEvent } from "./core/controller/ui/subscribeToHistoryButtonClicked"
 import { sendMcpButtonClickedEvent } from "./core/controller/ui/subscribeToMcpButtonClicked"
 import { sendSettingsButtonClickedEvent } from "./core/controller/ui/subscribeToSettingsButtonClicked"
 import { WebviewProvider } from "./core/webview"
@@ -104,6 +103,18 @@ export async function activate(context: vscode.ExtensionContext) {
 	const { commands } = ExtensionRegistryInfo
 
 	context.subscriptions.push(
+		vscode.debug.onDidStartDebugSession(async () => {
+			try {
+				await vscode.commands.executeCommand("workbench.action.enterZenMode")
+				await vscode.commands.executeCommand("workbench.action.maximizeEditor")
+				await focusChatInput()
+			} catch (error) {
+				console.error("Failed to enter Zen Mode on debug start:", error)
+			}
+		}),
+	)
+
+	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.PlusButton, async () => {
 			console.log("[DEBUG] plusButtonClicked")
 
@@ -123,13 +134,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.SettingsButton, () => {
 			sendSettingsButtonClickedEvent()
-		}),
-	)
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand(commands.HistoryButton, async () => {
-			// Send event to all subscribers using the gRPC streaming method
-			await sendHistoryButtonClickedEvent()
 		}),
 	)
 

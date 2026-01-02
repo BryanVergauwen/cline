@@ -44,7 +44,6 @@ export type TerminalOutputMethod = VscodeOutputMethod | StandaloneOutputMethod
 export enum TerminalOutputFailureReason {
 	TIMEOUT = "timeout",
 	NO_SHELL_INTEGRATION = "no_shell_integration",
-	CLIPBOARD_FAILED = "clipboard_failed",
 }
 
 /**
@@ -52,7 +51,6 @@ export enum TerminalOutputFailureReason {
  */
 export enum TerminalUserInterventionAction {
 	PROCESS_WHILE_RUNNING = "process_while_running",
-	MANUAL_PASTE = "manual_paste",
 	CANCELLED = "cancelled",
 }
 
@@ -62,7 +60,6 @@ export enum TerminalUserInterventionAction {
 export enum TerminalHangStage {
 	WAITING_FOR_COMPLETION = "waiting_for_completion",
 	BUFFER_STUCK = "buffer_stuck",
-	STREAM_TIMEOUT = "stream_timeout",
 }
 
 export type TelemetryMetadata = {
@@ -506,20 +503,6 @@ export class TelemetryService {
 
 	public captureExtensionActivated() {
 		this.captureToProviders(TelemetryService.EVENTS.USER.EXTENSION_ACTIVATED, {}, false)
-	}
-
-	public captureExtensionStorageError(errorMessage: string, eventName: string) {
-		// Truncate error message to prevent excessive data
-		this.capture({
-			event: TelemetryService.EVENTS.USER.EXTENSION_STORAGE_ERROR,
-			properties: {
-				error:
-					errorMessage.length > MAX_ERROR_MESSAGE_LENGTH
-						? errorMessage.substring(0, MAX_ERROR_MESSAGE_LENGTH) + "..."
-						: errorMessage,
-				eventName,
-			},
-		})
 	}
 
 	/**
@@ -1038,32 +1021,6 @@ export class TelemetryService {
 			},
 		})
 	}
-
-	/**
-	 * Records interactions with the git-based checkpoint system
-	 * @param ulid Unique identifier for the task
-	 * @param action The type of checkpoint action
-	 * @param durationMs Optional duration of the operation in milliseconds
-	 */
-	public captureCheckpointUsage(
-		ulid: string,
-		action: "shadow_git_initialized" | "commit_created" | "restored" | "diff_generated",
-		durationMs?: number,
-	) {
-		if (!this.isCategoryEnabled("checkpoints")) {
-			return
-		}
-
-		this.capture({
-			event: TelemetryService.EVENTS.TASK.CHECKPOINT_USED,
-			properties: {
-				ulid,
-				action,
-				durationMs,
-			},
-		})
-	}
-
 	/**
 	 * Records when a diff edit (replace_in_file) operation fails
 	 * @param ulid Unique identifier for the task
@@ -1581,36 +1538,6 @@ export class TelemetryService {
 			},
 		})
 	}
-
-	/**
-	 * Records task initialization timing and metadata
-	 * @param ulid Unique identifier for the task
-	 * @param taskId Task ID (timestamp in milliseconds when task was created)
-	 * @param durationMs Duration of initialization in milliseconds
-	 * @param hasCheckpoints Whether checkpoints are enabled for this task
-	 */
-	public captureTaskInitialization(ulid: string, taskId: string, durationMs: number, hasCheckpoints: boolean) {
-		this.capture({
-			event: TelemetryService.EVENTS.TASK.INITIALIZATION,
-			properties: {
-				ulid,
-				taskId,
-				durationMs,
-				hasCheckpoints,
-			},
-		})
-	}
-
-	/**
-	 * Records when the rules menu button is clicked to open the rules/workflows modal
-	 */
-	public captureRulesMenuOpened() {
-		this.capture({
-			event: TelemetryService.EVENTS.UI.RULES_MENU_OPENED,
-			properties: {},
-		})
-	}
-
 	// Terminal telemetry methods
 
 	/**
@@ -1741,38 +1668,6 @@ export class TelemetryService {
 			},
 		})
 	}
-
-	/**
-	 * Records multi-root checkpoint operations
-	 * @param ulid Task identifier
-	 * @param action Type of checkpoint action
-	 * @param rootCount Number of roots being checkpointed
-	 * @param successCount Number of successful checkpoints
-	 * @param failureCount Number of failed checkpoints
-	 * @param durationMs Total operation duration in milliseconds
-	 */
-	public captureMultiRootCheckpoint(
-		ulid: string,
-		action: "initialized" | "committed" | "restored",
-		rootCount: number,
-		successCount: number,
-		failureCount: number,
-		durationMs?: number,
-	) {
-		this.capture({
-			event: TelemetryService.EVENTS.WORKSPACE.MULTI_ROOT_CHECKPOINT,
-			properties: {
-				ulid,
-				action,
-				root_count: rootCount,
-				success_count: successCount,
-				failure_count: failureCount,
-				success_rate: rootCount > 0 ? successCount / rootCount : 0,
-				duration_ms: durationMs,
-			},
-		})
-	}
-
 	/**
 	 * Records workspace path resolution events
 	 * @param ulid Unique identifier for the task
@@ -1861,21 +1756,6 @@ export class TelemetryService {
 	public isEnabled(): boolean {
 		return this.providers.some((provider) => provider.isEnabled())
 	}
-
-	/**
-	 * Get current telemetry settings from the first provider
-	 * @returns Current telemetry settings
-	 */
-	public getSettings() {
-		return this.providers.length > 0
-			? this.providers[0].getSettings()
-			: {
-					extensionEnabled: false,
-					hostEnabled: false,
-					level: "off" as const,
-				}
-	}
-
 	/**
 	 * Records when a mention is successfully used and content is retrieved
 	 * @param mentionType Type of mention (file, folder, url, problems, terminal, git-changes, commit)

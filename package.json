@@ -138,11 +138,6 @@
 				"icon": "$(server)"
 			},
 			{
-				"command": "cline.historyButtonClicked",
-				"title": "History",
-				"icon": "$(history)"
-			},
-			{
 				"command": "cline.accountButtonClicked",
 				"title": "Account",
 				"icon": "$(account)"
@@ -261,11 +256,6 @@
 				{
 					"command": "cline.mcpButtonClicked",
 					"group": "navigation@2",
-					"when": "view == claude-dev.SidebarProvider"
-				},
-				{
-					"command": "cline.historyButtonClicked",
-					"group": "navigation@3",
 					"when": "view == claude-dev.SidebarProvider"
 				},
 				{

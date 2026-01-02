@@ -768,10 +768,6 @@ export class Task {
 		}
 	}
 
-	private async saveCheckpointCallback(_isAttemptCompletionMessage?: boolean, _completionMessageTs?: number): Promise<void> {
-		return
-	}
-
 	/**
 	 * Check if parallel tool calling is enabled.
 	 * Parallel tool calling is enabled if:
@@ -1595,13 +1591,11 @@ export class Task {
 		}
 
 		// Proceed with standard truncation
-		const newDeletedRange = this.contextManager.getNextTruncationRange(
+		this.taskState.conversationHistoryDeletedRange = this.contextManager.getNextTruncationRange(
 			apiConversationHistory,
 			this.taskState.conversationHistoryDeletedRange,
 			"quarter", // Force aggressive truncation
 		)
-
-		this.taskState.conversationHistoryDeletedRange = newDeletedRange
 
 		await this.messageStateHandler.saveClineMessagesAndUpdateHistory()
 		await this.contextManager.triggerApplyStandardContextTruncationNoticeChange(
@@ -1615,7 +1609,7 @@ export class Task {
 
 	async *attemptApiRequest(previousApiReqIndex: number): ApiStream {
 		// Wait for MCP servers to be connected before generating system prompt
-		await pWaitFor(() => this.mcpHub.isConnecting !== true, {
+		await pWaitFor(() => !this.mcpHub.isConnecting, {
 			timeout: 10_000,
 		}).catch(() => {
 			console.error("MCP servers failed to connect in time")
@@ -2193,7 +2187,7 @@ export class Task {
 		}
 
 		// error handling if the user uses the /newrule command & their .clinerules is a file, for file read operations didnt work properly
-		if (clinerulesError === true) {
+		if (clinerulesError) {
 			await this.say(
 				"error",
 				"Issue with processing the /newrule command. Double check that, if '.clinerules' already exists, it's a directory and not a file. Otherwise there was an issue referencing this file/directory.",
@@ -2684,8 +2678,7 @@ export class Task {
 				// Reset auto-retry counter for each new API request
 				this.taskState.autoRetryAttempts = 0
 
-				const recDidEndLoop = await this.recursivelyMakeClineRequests(this.taskState.userMessageContent)
-				didEndLoop = recDidEndLoop
+				didEndLoop = await this.recursivelyMakeClineRequests(this.taskState.userMessageContent)
 			} else {
 				// if there's no assistant_responses, that means we got no text or tool_use content blocks from API which we should assume is an error
 				const { model, providerId } = this.getCurrentProviderInfo()
@@ -2802,9 +2795,8 @@ export class Task {
 		}
 
 		const parseTextBlock = async (text: string): Promise<string> => {
-			const parsedText = text
 			const { processedText, needsClinerulesFileCheck: needsCheck } = await parseSlashCommands(
-				parsedText,
+				text,
 				localWorkflowToggles,
 				globalWorkflowToggles,
 				ulid,

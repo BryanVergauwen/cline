@@ -29,7 +29,6 @@ import SuccessButton from "@/components/common/SuccessButton"
 import McpResponseDisplay from "@/components/mcp/chat-display/McpResponseDisplay"
 import McpResourceRow from "@/components/mcp/configuration/tabs/installed/server-row/McpResourceRow"
 import McpToolRow from "@/components/mcp/configuration/tabs/installed/server-row/McpToolRow"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { PLATFORM_CONFIG, PlatformType } from "@/config/platform.config"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { cn } from "@/lib/utils"
@@ -406,9 +405,9 @@ export const ChatRowContent = memo(
 							shouldShowButton = true // Mark that we should show the button
 							const buttonHeight = 30
 							// Calculate the raw top position relative to the container, placing it above the selection
-							const calculatedTop = rangeRect.top - containerRect.top - buttonHeight - 5 // Subtract button height and a small margin
+							// Subtract button height and a small margin
 							// Allow the button to potentially have a negative top value
-							buttonTop = calculatedTop
+							buttonTop = rangeRect.top - containerRect.top - buttonHeight - 5
 							buttonLeft = Math.max(0, rangeRect.left - containerRect.left) // Still prevent going left of container
 							textToQuote = selectedText
 						}
@@ -535,13 +534,6 @@ export const ChatRowContent = memo(
 			marginBottom: "12px",
 		}
 
-		const _pStyle: React.CSSProperties = {
-			margin: 0,
-			whiteSpace: "pre-wrap",
-			wordBreak: "break-word",
-			overflowWrap: "anywhere",
-		}
-
 		const tool = useMemo(() => {
 			if (message.ask === "tool" || message.say === "tool") {
 				return JSON.parse(message.text || "{}") as ClineSayTool
@@ -549,19 +541,22 @@ export const ChatRowContent = memo(
 			return null
 		}, [message.ask, message.say, message.text])
 
-		// Helper function to check if file is an image
-		const isImageFile = (filePath: string): boolean => {
-			const imageExtensions = [".png", ".jpg", ".jpeg", ".webp"]
-			const extension = filePath.toLowerCase().split(".").pop()
-			return extension ? imageExtensions.includes(`.${extension}`) : false
-		}
-
 		if (tool) {
 			const colorMap = {
 				red: "var(--vscode-errorForeground)",
 				yellow: "var(--vscode-editorWarning-foreground)",
 				green: "var(--vscode-charts-green)",
 			}
+
+			const isToolError = (() => {
+				const content = tool?.content
+				if (typeof content !== "string") {
+					return false
+				}
+				return content.includes("The tool execution failed") || content.includes("<error>")
+			})()
+
+			const showToolDetails = isToolError
 			const toolIcon = (name: string, color?: string, rotation?: number, title?: string) => (
 				<span
 					className={`codicon codicon-${name} ph-no-capture`}
@@ -571,47 +566,6 @@ export const ChatRowContent = memo(
 						transform: rotation ? `rotate(${rotation}deg)` : undefined,
 					}}
 					title={title}></span>
-			)
-
-			const requestStatus = (() => {
-				const isRequest = message.type === "ask"
-				const isPending = message.partial === true
-				const label = isRequest ? "Request" : "Result"
-				const icon = isPending ? <ProgressIndicator /> : toolIcon("check", "green")
-				return { label, icon }
-			})()
-
-			const renderRequestPill = (tooltipText: string) => (
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<span
-							style={{
-								display: "inline-flex",
-								alignItems: "center",
-								gap: 6,
-								padding: "2px 6px",
-								borderRadius: 6,
-								border: "1px solid var(--vscode-editorGroup-border)",
-								color: "var(--vscode-descriptionForeground)",
-								cursor: "default",
-								flexShrink: 0,
-							}}>
-							<span style={{ fontSize: 12, lineHeight: "12px" }}>{requestStatus.label}</span>
-							<span style={{ display: "inline-flex", alignItems: "center" }}>{requestStatus.icon}</span>
-						</span>
-					</TooltipTrigger>
-					<TooltipContent sideOffset={6}>
-						<pre
-							style={{
-								margin: 0,
-								whiteSpace: "pre-wrap",
-								wordBreak: "break-word",
-								maxWidth: 520,
-							}}>
-							{tooltipText}
-						</pre>
-					</TooltipContent>
-				</Tooltip>
 			)
 
 			switch (tool.tool) {
@@ -659,13 +613,15 @@ export const ChatRowContent = memo(
 									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
 								<span style={{ fontWeight: "bold" }}>Delete file:</span>
 							</div>
-							<CodeAccordian
-								// isLoading={message.partial}
-								code={tool.content}
-								isExpanded={isExpanded}
-								onToggleExpand={handleToggle}
-								path={tool.path!}
-							/>
+							{showToolDetails ? (
+								<CodeAccordian
+									code={tool.content}
+									isExpanded={true}
+									language="markdown"
+									onToggleExpand={handleToggle}
+									path={tool.path!}
+								/>
+							) : null}
 						</>
 					)
 				case "newFileCreated":
@@ -677,17 +633,19 @@ export const ChatRowContent = memo(
 									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
 								<span style={{ fontWeight: "bold" }}>Create file:</span>
 							</div>
-							{backgroundEditEnabled && tool.path && tool.content ? (
-								<DiffEditRow patch={tool.content} path={tool.path} />
-							) : (
-								<CodeAccordian
-									code={tool.content!}
-									isExpanded={isExpanded}
-									isLoading={message.partial}
-									onToggleExpand={handleToggle}
-									path={tool.path!}
-								/>
-							)}
+							{showToolDetails ? (
+								backgroundEditEnabled && tool.path && tool.content ? (
+									<DiffEditRow patch={tool.content} path={tool.path} />
+								) : (
+									<CodeAccordian
+										code={tool.content!}
+										isExpanded={true}
+										isLoading={message.partial}
+										onToggleExpand={handleToggle}
+										path={tool.path!}
+									/>
+								)
+							) : null}
 						</>
 					)
 				case "readFile": {
@@ -713,7 +671,6 @@ export const ChatRowContent = memo(
 									{`${cleanPathPrefix(tool.path ?? "")}${lineSuffix}`}
 								</span>
 							</div>
-							{renderRequestPill(JSON.stringify(tool, null, 2))}
 						</div>
 					)
 				}
@@ -728,13 +685,15 @@ export const ChatRowContent = memo(
 									{message.type === "ask" ? "List files (top-level):" : "Listed files (top-level):"}
 								</span>
 							</div>
-							<CodeAccordian
-								code={tool.content!}
-								isExpanded={isExpanded}
-								language="shell-session"
-								onToggleExpand={handleToggle}
-								path={tool.path!}
-							/>
+							{showToolDetails ? (
+								<CodeAccordian
+									code={tool.content!}
+									isExpanded={true}
+									language="shell-session"
+									onToggleExpand={handleToggle}
+									path={tool.path!}
+								/>
+							) : null}
 						</>
 					)
 				case "listFilesRecursive":
@@ -748,13 +707,15 @@ export const ChatRowContent = memo(
 									{message.type === "ask" ? "List files (recursive):" : "Listed files (recursive):"}
 								</span>
 							</div>
-							<CodeAccordian
-								code={tool.content!}
-								isExpanded={isExpanded}
-								language="shell-session"
-								onToggleExpand={handleToggle}
-								path={tool.path!}
-							/>
+							{showToolDetails ? (
+								<CodeAccordian
+									code={tool.content!}
+									isExpanded={true}
+									language="shell-session"
+									onToggleExpand={handleToggle}
+									path={tool.path!}
+								/>
+							) : null}
 						</>
 					)
 				case "listCodeDefinitionNames":
@@ -768,12 +729,14 @@ export const ChatRowContent = memo(
 									{message.type === "ask" ? "List code definitions:" : "Listed code definitions:"}
 								</span>
 							</div>
-							<CodeAccordian
-								code={tool.content!}
-								isExpanded={isExpanded}
-								onToggleExpand={handleToggle}
-								path={tool.path!}
-							/>
+							{showToolDetails ? (
+								<CodeAccordian
+									code={tool.content!}
+									isExpanded={true}
+									onToggleExpand={handleToggle}
+									path={tool.path!}
+								/>
+							) : null}
 						</>
 					)
 				case "searchFiles":
