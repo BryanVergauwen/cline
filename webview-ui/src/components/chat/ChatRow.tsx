@@ -10,7 +10,7 @@ import {
 	COMPLETION_RESULT_CHANGES_FLAG,
 } from "@shared/ExtensionMessage"
 import { BooleanRequest, Int64Request, StringRequest } from "@shared/proto/cline/common"
-import { VSCodeBadge, VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react"
+import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react"
 import deepEqual from "fast-deep-equal"
 import { FoldVerticalIcon } from "lucide-react"
 import React, { MouseEvent, memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -31,7 +31,6 @@ import McpResourceRow from "@/components/mcp/configuration/tabs/installed/server
 import McpToolRow from "@/components/mcp/configuration/tabs/installed/server-row/McpToolRow"
 import { PLATFORM_CONFIG, PlatformType } from "@/config/platform.config"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { cn } from "@/lib/utils"
 import { FileServiceClient, TaskServiceClient, UiServiceClient } from "@/services/grpc-client"
 import { findMatchingResourceOrTemplate, getMcpServerDisplayName } from "@/utils/mcp"
 import CodeAccordian, { cleanPathPrefix } from "../common/CodeAccordian"
@@ -316,12 +315,12 @@ export const ChatRowContent = memo(
 		// Command output expansion state (for all messages, but only used by command messages)
 		const [isOutputFullyExpanded, setIsOutputFullyExpanded] = useState(false)
 		const prevCommandExecutingRef = useRef<boolean>(false)
-		const [cost, apiReqCancelReason, apiReqStreamingFailedMessage, retryStatus] = useMemo(() => {
+		const [apiReqCancelReason, apiReqStreamingFailedMessage, retryStatus] = useMemo(() => {
 			if (message.text != null && message.say === "api_req_started") {
 				const info: ClineApiReqInfo = JSON.parse(message.text)
-				return [info.cost, info.cancelReason, info.streamingFailedMessage, info.retryStatus]
+				return [info.cancelReason, info.streamingFailedMessage, info.retryStatus]
 			}
-			return [undefined, undefined, undefined, undefined, undefined]
+			return [undefined, undefined, undefined]
 		}, [message.text, message.say])
 
 		// when resuming task last won't be api_req_failed but a resume_task message so api_req_started will show loading spinner. that's why we just remove the last api_req_started that failed without streaming anything
@@ -493,7 +492,6 @@ export const ChatRowContent = memo(
 					]
 				case "api_req_started":
 					return ErrorBlockTitle({
-						cost,
 						apiReqCancelReason,
 						apiRequestFailedMessage,
 						retryStatus,
@@ -513,7 +511,6 @@ export const ChatRowContent = memo(
 			}
 		}, [
 			type,
-			cost,
 			apiRequestFailedMessage,
 			isCommandExecuting,
 			isCommandPending,
@@ -547,7 +544,7 @@ export const ChatRowContent = memo(
 			display: "flex",
 			alignItems: "center",
 			gap: "10px",
-			marginBottom: isCompactToolHeader ? "0px" : "12px",
+			marginBottom: isCompactToolHeader ? "0px" : "6px",
 		}
 
 		if (tool) {
@@ -1326,8 +1323,7 @@ export const ChatRowContent = memo(
 									}}
 									style={{
 										...headerStyle,
-										marginBottom:
-											(cost == null && apiRequestFailedMessage) || apiReqStreamingFailedMessage ? 10 : 0,
+										marginBottom: apiRequestFailedMessage || apiReqStreamingFailedMessage ? 10 : 0,
 										justifyContent: "space-between",
 										cursor: "pointer",
 										userSelect: "none",
@@ -1342,41 +1338,23 @@ export const ChatRowContent = memo(
 											alignItems: "center",
 											gap: "10px",
 										}}>
-										{icon}
-										{title}
-										{/* Need to render this every time since it affects height of row by 2px */}
-										<VSCodeBadge
-											className={cn("text-sm", {
-												"opacity-100": cost != null && cost > 0,
-												"opacity-0": cost == null || cost <= 0,
-											})}
-											style={{
-												opacity: cost != null && cost > 0 ? 1 : 0,
-											}}>
-											{cost != null && Number(cost || 0) > 0 ? `$${Number(cost || 0).toFixed(4)}` : ""}
-										</VSCodeBadge>
+										<div style={{ display: "flex", alignItems: "center", gap: 8 }} />
+										<span className={`codicon codicon-chevron-${isExpanded ? "up" : "down"}`}></span>
 									</div>
-									<span className={`codicon codicon-chevron-${isExpanded ? "up" : "down"}`}></span>
-								</div>
-								{((cost == null && apiRequestFailedMessage) || apiReqStreamingFailedMessage) && (
-									<ErrorRow
-										apiReqStreamingFailedMessage={apiReqStreamingFailedMessage}
-										apiRequestFailedMessage={apiRequestFailedMessage}
-										errorType="error"
-										message={message}
-									/>
-								)}
-
-								{isExpanded && (
+									{(apiRequestFailedMessage || apiReqStreamingFailedMessage) && (
+										<ErrorRow
+											apiReqStreamingFailedMessage={apiReqStreamingFailedMessage}
+											apiRequestFailedMessage={apiRequestFailedMessage}
+											errorType="error"
+											message={message}
+										/>
+									)}
 									<div style={{ marginTop: "10px" }}>
-										<CodeAccordian
-											code={JSON.parse(message.text || "{}").request}
-											isExpanded={true}
-											language="markdown"
-											onToggleExpand={handleToggle}
+										<Markdown
+											markdown={`${"```"}json\n${JSON.stringify(JSON.parse(message.text || "{}").request, null, 2)}\n${"```"}`}
 										/>
 									</div>
-								)}
+								</div>
 							</>
 						)
 					case "api_req_finished":

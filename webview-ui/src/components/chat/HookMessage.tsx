@@ -136,7 +136,7 @@ const HookMessage = memo(({ message, CommandOutput }: HookMessageProps) => {
 		display: "flex",
 		alignItems: "center",
 		gap: "10px",
-		marginBottom: "12px",
+		marginBottom: "2px",
 	}
 
 	return (
