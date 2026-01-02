@@ -170,7 +170,6 @@ export type ClineSay =
 	| "diff_error"
 	| "deleted_api_reqs"
 	| "clineignore_error"
-	| "checkpoint_created"
 	| "load_mcp_documentation"
 	| "generate_explanation"
 	| "info" // Added for general informational messages like retry status

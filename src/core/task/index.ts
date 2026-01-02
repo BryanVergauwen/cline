@@ -104,7 +104,6 @@ export type ToolResponse = ClineToolResponseContent
 
 type ICheckpointManager = {
 	presentMultifileDiff?: (messageTs: number, seeNewChangesSinceLastTaskCompletion: boolean) => Promise<void>
-	getShadowGitConfigWorkTree?: () => Promise<string | undefined>
 }
 
 type TaskParams = {
@@ -321,9 +320,6 @@ export class Task {
 			this.ulid = historyItem.ulid ?? ulid()
 			this.taskIsFavorited = historyItem.isFavorited
 			this.taskState.conversationHistoryDeletedRange = historyItem.conversationHistoryDeletedRange
-			if (historyItem.checkpointManagerErrorMessage) {
-				this.taskState.checkpointManagerErrorMessage = historyItem.checkpointManagerErrorMessage
-			}
 		} else if (task || images || files) {
 			this.ulid = ulid()
 		} else {

@@ -40,13 +40,6 @@ export async function getTaskHistory(controller: Controller, request: GetTaskHis
 					}
 				}
 
-				// For tasks without cwdOnTaskInitialization, check the older shadowGitConfigWorkTree property
-				if (!isInWorkspace && item.shadowGitConfigWorkTree) {
-					if (arePathsEqual(item.shadowGitConfigWorkTree, workspacePath)) {
-						isInWorkspace = true
-					}
-				}
-
 				if (!isInWorkspace) {
 					return false
 				}

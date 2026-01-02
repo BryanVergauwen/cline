@@ -1547,8 +1547,6 @@ export const ChatRowContent = memo(
 						return <ErrorRow errorType="diff_error" message={message} />
 					case "clineignore_error":
 						return <ErrorRow errorType="clineignore_error" message={message} />
-					case "checkpoint_created":
-						return null
 					case "load_mcp_documentation":
 						return (
 							<div
