@@ -36,6 +36,16 @@ export function filterVisibleMessages(messages: ClineMessage[]): ClineMessage[] 
 			case "deleted_api_reqs": // aggregated api_req metrics from deleted messages
 			case "task_progress": // task progress messages are displayed in TaskHeader, not in main chat
 				return false
+			case "api_req_started": {
+				// Hide API request rows by default (we don't want request accordions / empty spacers).
+				// Only keep them when there's an error/cancellation so users can inspect the request payload.
+				try {
+					const info = JSON.parse(message.text || "{}") as { cancelReason?: unknown; streamingFailedMessage?: unknown }
+					return info.cancelReason != null || info.streamingFailedMessage != null
+				} catch {
+					return false
+				}
+			}
 			case "text":
 				// Hide verbose tool-result text blocks (e.g. "[read_file for '...'] Result:") in the UI.
 				// We only keep them if they contain an error.

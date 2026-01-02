@@ -8,7 +8,6 @@ import { getApiMetrics } from "@shared/getApiMetrics"
 import { StringRequest } from "@shared/proto/cline/common"
 import { useCallback, useEffect, useMemo } from "react"
 import { useMount } from "react-use"
-import { normalizeApiConfiguration } from "@/components/settings/utils/providerUtils"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { useShowNavbar } from "@/context/PlatformContext"
 import { FileServiceClient, UiServiceClient } from "@/services/grpc-client"
@@ -45,15 +44,13 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement }: ChatViewProp
 	const {
 		version,
 		clineMessages: messages,
-		apiConfiguration,
 		telemetrySetting,
 		mode,
 		userInfo,
 		currentFocusChainChecklist,
 		hooksEnabled,
 	} = useExtensionState()
-	const isProdHostedApp = userInfo?.apiBaseUrl === "https://app.cline.bot"
-	const shouldShowQuickWins = isProdHostedApp
+	const shouldShowQuickWins = userInfo?.apiBaseUrl === "https://app.cline.bot"
 
 	//const task = messages.length > 0 ? (messages[0].say === "task" ? messages[0] : undefined) : undefined) : undefined
 	const task = useMemo(() => messages.at(0), [messages]) // leaving this less safe version here since if the first message is not a task, then the extension is in a bad state and needs to be debugged (see Cline.abort)
@@ -201,13 +198,14 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement }: ChatViewProp
 	const messageHandlers = useMessageHandlers(messages, chatState)
 
 	const { selectedModelInfo: normalizedSelectedModelInfo } = useMemo(() => {
-		return normalizeApiConfiguration(apiConfiguration, mode)
-	}, [apiConfiguration, mode])
+		return { selectedModelInfo: {} }
+	}, [])
 
 	const selectedModelInfo = useMemo(() => {
 		return {
 			...normalizedSelectedModelInfo,
 			supportsImages: false,
+			supportsPromptCache: false,
 		}
 	}, [normalizedSelectedModelInfo])
 

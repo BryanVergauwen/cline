@@ -522,19 +522,33 @@ export const ChatRowContent = memo(
 			message.text,
 		])
 
-		const headerStyle: React.CSSProperties = {
-			display: "flex",
-			alignItems: "center",
-			gap: "10px",
-			marginBottom: "12px",
-		}
-
 		const tool = useMemo(() => {
 			if (message.ask === "tool" || message.say === "tool") {
 				return JSON.parse(message.text || "{}") as ClineSayTool
 			}
 			return null
 		}, [message.ask, message.say, message.text])
+
+		const isCompactToolHeader = (() => {
+			if (!tool) {
+				return false
+			}
+			// Keep spacing when we're expected to show additional content (diffs/errors). For simple tool summaries, remove spacing.
+			if (tool.tool === "editedExistingFile") {
+				return false
+			}
+			const content = tool.content
+			const hasErrorDetails =
+				typeof content === "string" && (content.includes("The tool execution failed") || content.includes("<error>"))
+			return !hasErrorDetails
+		})()
+
+		const headerStyle: React.CSSProperties = {
+			display: "flex",
+			alignItems: "center",
+			gap: "10px",
+			marginBottom: isCompactToolHeader ? "0px" : "12px",
+		}
 
 		if (tool) {
 			const colorMap = {
@@ -569,7 +583,16 @@ export const ChatRowContent = memo(
 					return (
 						<>
 							<div style={{ ...headerStyle, justifyContent: "space-between" }}>
-								<div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+								<div
+									style={{
+										display: "flex",
+										alignItems: "center",
+										gap: "10px",
+										minWidth: 0,
+										fontSize: "12px",
+										color: "var(--vscode-descriptionForeground)",
+										opacity: 0.8,
+									}}>
 									{toolIcon("edit")}
 									{tool.operationIsLocatedInWorkspace === false &&
 										toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}
@@ -647,7 +670,16 @@ export const ChatRowContent = memo(
 					const lineSuffix = hasLineRange ? ` (L${maybeStartLine}-L${maybeEndLine})` : ""
 					return (
 						<div style={{ ...headerStyle, justifyContent: "space-between" }}>
-							<div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+							<div
+								style={{
+									display: "flex",
+									alignItems: "center",
+									gap: "10px",
+									minWidth: 0,
+									fontSize: "12px",
+									color: "var(--vscode-descriptionForeground)",
+									opacity: 0.8,
+								}}>
 								{toolIcon("file-code")}
 								{tool.operationIsLocatedInWorkspace === false &&
 									toolIcon("sign-out", "yellow", -90, "This file is outside of your workspace")}

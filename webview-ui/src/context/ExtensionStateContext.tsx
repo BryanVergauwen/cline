@@ -51,8 +51,6 @@ export interface ExtensionStateContextType extends ExtensionState {
 	// View state
 	showMcp: boolean
 	mcpTab?: McpViewTab
-	showSettings: boolean
-	settingsTargetSection?: string
 	showAccount: boolean
 	showAnnouncement: boolean
 	showChatModelSelector: boolean
@@ -95,12 +93,10 @@ export interface ExtensionStateContextType extends ExtensionState {
 
 	// Navigation functions
 	navigateToMcp: (tab?: McpViewTab) => void
-	navigateToSettings: (targetSection?: string) => void
 	navigateToAccount: () => void
 	navigateToChat: () => void
 
 	// Hide functions
-	hideSettings: () => void
 	hideAccount: () => void
 	hideAnnouncement: () => void
 	hideChatModelSelector: () => void
@@ -118,8 +114,6 @@ export const ExtensionStateContextProvider: React.FC<{
 	// UI view state
 	const [showMcp, setShowMcp] = useState(false)
 	const [mcpTab, setMcpTab] = useState<McpViewTab | undefined>(undefined)
-	const [showSettings, setShowSettings] = useState(false)
-	const [settingsTargetSection, setSettingsTargetSection] = useState<string | undefined>(undefined)
 	const [showAccount, setShowAccount] = useState(false)
 	const [showAnnouncement, setShowAnnouncement] = useState(false)
 	const [showChatModelSelector, setShowChatModelSelector] = useState(false)
@@ -131,10 +125,6 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [setShowMcp, setMcpTab])
 
 	// Hide functions
-	const hideSettings = useCallback(() => {
-		setShowSettings(false)
-		setSettingsTargetSection(undefined)
-	}, [])
 	const hideAccount = useCallback(() => setShowAccount(false), [setShowAccount])
 	const hideAnnouncement = useCallback(() => setShowAnnouncement(false), [setShowAnnouncement])
 	const hideChatModelSelector = useCallback(() => setShowChatModelSelector(false), [setShowChatModelSelector])
@@ -142,37 +132,24 @@ export const ExtensionStateContextProvider: React.FC<{
 	// Navigation functions
 	const navigateToMcp = useCallback(
 		(tab?: McpViewTab) => {
-			setShowSettings(false)
 			setShowAccount(false)
 			if (tab) {
 				setMcpTab(tab)
 			}
 			setShowMcp(true)
 		},
-		[setShowMcp, setMcpTab, setShowSettings, setShowAccount],
-	)
-
-	const navigateToSettings = useCallback(
-		(targetSection?: string) => {
-			closeMcpView()
-			setShowAccount(false)
-			setSettingsTargetSection(targetSection)
-			setShowSettings(true)
-		},
-		[closeMcpView],
+		[setShowMcp, setMcpTab, setShowAccount],
 	)
 
 	const navigateToAccount = useCallback(() => {
-		setShowSettings(false)
 		closeMcpView()
 		setShowAccount(false)
-	}, [setShowSettings, closeMcpView, setShowAccount])
+	}, [closeMcpView, setShowAccount])
 
 	const navigateToChat = useCallback(() => {
-		setShowSettings(false)
 		closeMcpView()
 		setShowAccount(false)
-	}, [setShowSettings, closeMcpView, setShowAccount])
+	}, [closeMcpView, setShowAccount])
 
 	const [state, setState] = useState<ExtensionState>({
 		version: "",
@@ -272,7 +249,6 @@ export const ExtensionStateContextProvider: React.FC<{
 	const mcpButtonUnsubscribeRef = useRef<(() => void) | null>(null)
 	const chatButtonUnsubscribeRef = useRef<(() => void) | null>(null)
 	const accountButtonClickedSubscriptionRef = useRef<(() => void) | null>(null)
-	const settingsButtonClickedSubscriptionRef = useRef<(() => void) | null>(null)
 	const partialMessageUnsubscribeRef = useRef<(() => void) | null>(null)
 	const mcpMarketplaceUnsubscribeRef = useRef<(() => void) | null>(null)
 	const openRouterModelsUnsubscribeRef = useRef<(() => void) | null>(null)
@@ -406,20 +382,6 @@ export const ExtensionStateContextProvider: React.FC<{
 			},
 			onComplete: () => {
 				console.log("MCP servers subscription completed")
-			},
-		})
-
-		// Set up settings button clicked subscription
-		settingsButtonClickedSubscriptionRef.current = UiServiceClient.subscribeToSettingsButtonClicked(EmptyRequest.create({}), {
-			onResponse: () => {
-				// When settings button is clicked, navigate to settings
-				navigateToSettings()
-			},
-			onError: (error) => {
-				console.error("Error in settings button clicked subscription:", error)
-			},
-			onComplete: () => {
-				console.log("Settings button clicked subscription completed")
 			},
 		})
 
@@ -581,10 +543,6 @@ export const ExtensionStateContextProvider: React.FC<{
 				accountButtonClickedSubscriptionRef.current()
 				accountButtonClickedSubscriptionRef.current = null
 			}
-			if (settingsButtonClickedSubscriptionRef.current) {
-				settingsButtonClickedSubscriptionRef.current()
-				settingsButtonClickedSubscriptionRef.current = null
-			}
 			if (partialMessageUnsubscribeRef.current) {
 				partialMessageUnsubscribeRef.current()
 				partialMessageUnsubscribeRef.current = null
@@ -696,8 +654,6 @@ export const ExtensionStateContextProvider: React.FC<{
 		availableTerminalProfiles,
 		showMcp,
 		mcpTab,
-		showSettings,
-		settingsTargetSection,
 		showAccount,
 		showAnnouncement,
 		showChatModelSelector,
@@ -714,12 +670,10 @@ export const ExtensionStateContextProvider: React.FC<{
 
 		// Navigation functions
 		navigateToMcp,
-		navigateToSettings,
 		navigateToAccount,
 		navigateToChat,
 
 		// Hide functions
-		hideSettings,
 		hideAccount,
 		hideAnnouncement,
 		setShowAnnouncement,

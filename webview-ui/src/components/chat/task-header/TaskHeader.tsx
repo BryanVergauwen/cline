@@ -2,7 +2,6 @@ import { ClineMessage } from "@shared/ExtensionMessage"
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react"
 import React, { useCallback, useLayoutEffect, useMemo, useState } from "react"
 import Thumbnails from "@/components/common/Thumbnails"
-import { getModeSpecificFields, normalizeApiConfiguration } from "@/components/settings/utils/providerUtils"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { cn } from "@/lib/utils"
 import { getEnvironmentColor } from "@/utils/environmentColors"
@@ -84,8 +83,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 	}, [isHighlightedTextExpanded])
 
 	// Simplified computed values
-	const { selectedModelInfo } = normalizeApiConfiguration(apiConfiguration, mode)
-	const modeFields = getModeSpecificFields(apiConfiguration, mode)
+	const selectedModelInfo: { contextWindow?: number } = {}
+	const modeFields: { apiProvider?: string; openAiModelInfo?: { inputPrice?: any; outputPrice?: any } } = {}
 
 	const isCostAvailable =
 		(totalCost &&

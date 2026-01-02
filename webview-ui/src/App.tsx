@@ -2,7 +2,6 @@ import type { Boolean, EmptyRequest } from "@shared/proto/cline/common"
 import { useEffect } from "react"
 import ChatView from "./components/chat/ChatView"
 import McpView from "./components/mcp/configuration/McpConfigurationView"
-import SettingsView from "./components/settings/SettingsView"
 import { useExtensionState } from "./context/ExtensionStateContext"
 import { Providers } from "./Providers"
 import { UiServiceClient } from "./services/grpc-client"
@@ -13,14 +12,11 @@ const AppContent = () => {
 		shouldShowAnnouncement,
 		showMcp,
 		mcpTab,
-		showSettings,
-		settingsTargetSection,
 		showAccount,
 		showAnnouncement,
 		setShowAnnouncement,
 		setShouldShowAnnouncement,
 		closeMcpView,
-		hideSettings,
 		hideAnnouncement,
 	} = useExtensionState()
 
@@ -45,14 +41,9 @@ const AppContent = () => {
 
 	return (
 		<div className="flex h-screen w-full flex-col">
-			{showSettings && <SettingsView onDone={hideSettings} targetSection={settingsTargetSection} />}
 			{showMcp && <McpView initialTab={mcpTab} onDone={closeMcpView} />}
 			{/* Do not conditionally load ChatView, it's expensive and there's state we don't want to lose (user input, disableInput, askResponse promise, etc.) */}
-			<ChatView
-				hideAnnouncement={hideAnnouncement}
-				isHidden={showSettings || showMcp || showAccount}
-				showAnnouncement={showAnnouncement}
-			/>
+			<ChatView hideAnnouncement={hideAnnouncement} isHidden={showMcp || showAccount} showAnnouncement={showAnnouncement} />
 		</div>
 	)
 }

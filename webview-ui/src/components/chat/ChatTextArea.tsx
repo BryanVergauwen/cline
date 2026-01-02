@@ -1,27 +1,19 @@
 import { PulsingBorder } from "@paper-design/shaders-react"
 import { EmptyRequest } from "@shared/proto/cline/common"
 import { UpdateApiConfigurationRequest } from "@shared/proto/cline/models"
-import { PlanActMode, TogglePlanActModeRequest } from "@shared/proto/cline/state"
 import { convertApiConfigurationToProto } from "@shared/proto-conversions/models/api-configuration-conversion"
 import { type SlashCommand } from "@shared/slashCommands"
-import { Mode } from "@shared/storage/types"
 import type React from "react"
-import { forwardRef, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import DynamicTextArea from "react-textarea-autosize"
-import { useWindowSize } from "react-use"
 import styled from "styled-components"
 import { CHAT_CONSTANTS } from "@/components/chat/chat-view/constants"
-import ModelPickerModal from "@/components/chat/ModelPickerModal"
 import SlashCommandMenu from "@/components/chat/SlashCommandMenu"
-import { CODE_BLOCK_BG_COLOR } from "@/components/common/CodeBlock"
-import { getModeSpecificFields, normalizeApiConfiguration } from "@/components/settings/utils/providerUtils"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useClineAuth } from "@/context/ClineAuthContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { usePlatform } from "@/context/PlatformContext"
 import { cn } from "@/lib/utils"
 import { ModelsServiceClient, StateServiceClient } from "@/services/grpc-client"
-import { useShortcut } from "@/utils/hooks"
 import { isSafari } from "@/utils/platformUtils"
 import {
 	getMatchingSlashCommands,
@@ -58,23 +50,7 @@ interface ChatTextAreaProps {
 
 const PLAN_MODE_COLOR = "var(--vscode-activityWarningBadge-background)"
 const ACT_MODE_COLOR = "var(--vscode-focusBorder)"
-
-const SwitchContainer = styled.div<{ disabled: boolean }>`
-	display: flex;
-	align-items: center;
-	background-color: transparent;
-	border: 1px solid var(--vscode-input-border);
-	border-radius: 12px;
-	overflow: hidden;
-	cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
-	opacity: ${(props) => (props.disabled ? 0.5 : 1)};
-	transform: scale(1);
-	transform-origin: right center;
-	margin-left: 0;
-	user-select: none; // Prevent text selection
-`
-
-const Slider = styled.div.withConfig({
+styled.div.withConfig({
 	shouldForwardProp: (prop) => !["isAct", "isPlan"].includes(prop),
 })<{ isAct: boolean; isPlan?: boolean }>`
 	position: absolute;
@@ -84,7 +60,6 @@ const Slider = styled.div.withConfig({
 	transition: transform 0.2s ease;
 	transform: translateX(${(props) => (props.isAct ? "100%" : "0%")});
 `
-
 const ButtonGroup = styled.div`
 	display: flex;
 	align-items: center;
@@ -92,131 +67,14 @@ const ButtonGroup = styled.div`
 	flex: 1;
 	min-width: 0;
 `
-
-const ButtonContainer = styled.div`
-	display: flex;
-	align-items: center;
-	gap: 3px;
-	font-size: 10px;
-	white-space: nowrap;
-	min-width: 0;
-	width: 100%;
-`
-
-const ModelSelectorTooltip = styled.div<ModelSelectorTooltipProps>`
-	position: fixed;
-	bottom: calc(100% + 9px);
-	left: 15px;
-	right: 15px;
-	background: ${CODE_BLOCK_BG_COLOR};
-	border: 1px solid var(--vscode-editorGroup-border);
-	padding: 12px 12px 18px 12px;
-	border-radius: 3px;
-	z-index: 1000;
-	max-height: calc(100vh - 100px);
-	overflow-y: auto;
-	overscroll-behavior: contain;
-
-	// Add invisible padding for hover zone
-	&::before {
-		content: "";
-		position: fixed;
-		bottom: ${(props) => `calc(100vh - ${props.menuPosition}px - 2px)`};
-		left: 0;
-		right: 0;
-		height: 8px;
-	}
-
-	// Arrow pointing down
-	&::after {
-		content: "";
-		position: fixed;
-		bottom: ${(props) => `calc(100vh - ${props.menuPosition}px)`};
-		right: ${(props) => props.arrowPosition}px;
-		width: 10px;
-		height: 10px;
-		background: ${CODE_BLOCK_BG_COLOR};
-		border-right: 1px solid var(--vscode-editorGroup-border);
-		border-bottom: 1px solid var(--vscode-editorGroup-border);
-		transform: rotate(45deg);
-		z-index: -1;
-	}
-`
-
 const ModelContainer = styled.div`
 	position: relative;
 	display: flex;
 	flex: 1;
 	min-width: 0;
 `
-
-const ModelButtonWrapper = styled.div`
-	display: inline-flex; // Make it shrink to content
-	min-width: 0; // Allow shrinking
-	max-width: 100%; // Don't overflow parent
-`
-
-const ModelDisplayButton = styled.a<{ isActive?: boolean; disabled?: boolean }>`
-	padding: 0px 0px;
-	height: 20px;
-	width: 100%;
-	min-width: 0;
-	cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
-	text-decoration: ${(props) => (props.isActive ? "underline" : "none")};
-	color: ${(props) => (props.isActive ? "var(--vscode-foreground)" : "var(--vscode-descriptionForeground)")};
-	display: flex;
-	align-items: center;
-	font-size: 10px;
-	outline: none;
-	user-select: none;
-	opacity: ${(props) => (props.disabled ? 0.5 : 1)};
-	pointer-events: ${(props) => (props.disabled ? "none" : "auto")};
-
-	&:hover,
-	&:focus {
-		color: ${(props) => (props.disabled ? "var(--vscode-descriptionForeground)" : "var(--vscode-foreground)")};
-		text-decoration: ${(props) => (props.disabled ? "none" : "underline")};
-		outline: none;
-	}
-
-	&:active {
-		color: ${(props) => (props.disabled ? "var(--vscode-descriptionForeground)" : "var(--vscode-foreground)")};
-		text-decoration: ${(props) => (props.disabled ? "none" : "underline")};
-		outline: none;
-	}
-
-	&:focus-visible {
-		outline: none;
-	}
-`
-
-const ModelButtonContent = styled.div`
-	width: 100%;
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-`
-
 const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
-	(
-		{
-			inputValue,
-			setInputValue,
-			sendingDisabled,
-			placeholderText,
-			selectedFiles,
-			selectedImages,
-			setSelectedImages,
-			setSelectedFiles,
-			onSend,
-			onSelectFilesAndImages,
-			shouldDisableFilesAndImages,
-			onHeightChange,
-			onFocusChange,
-		},
-		ref,
-	) => {
+	({ inputValue, setInputValue, sendingDisabled, placeholderText, selectedFiles, selectedImages, onFocusChange }, ref) => {
 		const {
 			mode,
 			apiConfiguration,
@@ -226,8 +84,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			globalWorkflowToggles,
 			remoteWorkflowToggles,
 			remoteConfigSettings,
-			showChatModelSelector: showModelSelector,
-			setShowChatModelSelector: setShowModelSelector,
 			dictationSettings,
 		} = useExtensionState()
 		const { clineUser } = useClineAuth()
@@ -248,20 +104,14 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const [intendedCursorPosition, setIntendedCursorPosition] = useState<number | null>(null)
 
 		const modelSelectorRef = useRef<HTMLDivElement>(null)
-		const { width: viewportWidth, height: viewportHeight } = useWindowSize()
-		const buttonRef = useRef<HTMLDivElement>(null)
-		const [arrowPosition, setArrowPosition] = useState(0)
-		const [menuPosition, setMenuPosition] = useState(0)
-		const [shownTooltipMode, setShownTooltipMode] = useState<Mode | null>(null)
-		const _shiftHoldTimerRef = useRef<NodeJS.Timeout | null>(null)
+		useRef<HTMLDivElement>(null)
+		useRef<NodeJS.Timeout | null>(null)
 		const [showUnsupportedFileError, setShowUnsupportedFileError] = useState(false)
 		const unsupportedFileTimerRef = useRef<NodeJS.Timeout | null>(null)
 
 		void isMouseDownOnMenu
 
-		// Add a ref to track previous menu state
-		const prevShowModelSelector = useRef(showModelSelector)
-
+		useRef(false)
 		void platform
 
 		useEffect(() => {
@@ -595,105 +445,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					})
 			}
 		}, [apiConfiguration, openRouterModels])
-
-		const onModeToggle = useCallback(() => {
-			// if (textAreaDisabled) return
-			let changeModeDelay = 0
-			if (showModelSelector) {
-				// user has model selector open, so we should save it before switching modes
-				submitApiConfig()
-				changeModeDelay = 250 // necessary to let the api config update (we send message and wait for it to be saved) FIXME: this is a hack and we ideally should check for api config changes, then wait for it to be saved, before switching modes
-			}
-			setTimeout(async () => {
-				const convertedProtoMode = mode === "plan" ? PlanActMode.ACT : PlanActMode.PLAN
-				const response = await StateServiceClient.togglePlanActModeProto(
-					TogglePlanActModeRequest.create({
-						mode: convertedProtoMode,
-						chatContent: {
-							message: inputValue.trim() ? inputValue : undefined,
-							images: selectedImages,
-							files: selectedFiles,
-						},
-					}),
-				)
-				// Focus the textarea after mode toggle with slight delay
-				setTimeout(() => {
-					if (response.value) {
-						setInputValue("")
-					}
-					textAreaRef.current?.focus()
-				}, 100)
-			}, changeModeDelay)
-		}, [mode, showModelSelector, submitApiConfig, inputValue, selectedImages, selectedFiles])
-
-		useShortcut(usePlatform().togglePlanActKeys, onModeToggle, { disableTextInputs: false }) // important that we don't disable the text input here
-
-		// Add Context/@mentions removed
-
-		const handleModelButtonClick = () => {
-			setShowModelSelector(!showModelSelector)
-		}
-
-		// Get model display name
-		const modelDisplayName = useMemo(() => {
-			const { selectedProvider, selectedModelId } = normalizeApiConfiguration(apiConfiguration, mode)
-			const { vsCodeLmModelSelector, togetherModelId, lmStudioModelId, ollamaModelId, liteLlmModelId, requestyModelId } =
-				getModeSpecificFields(apiConfiguration, mode)
-			const unknownModel = "unknown"
-			if (!apiConfiguration) {
-				return unknownModel
-			}
-			switch (selectedProvider) {
-				case "cline":
-					return `${selectedProvider}:${selectedModelId}`
-				case "openai":
-					return `openai-compat:${selectedModelId}`
-				case "vscode-lm":
-					return `vscode-lm:${vsCodeLmModelSelector ? `${vsCodeLmModelSelector.vendor ?? ""}/${vsCodeLmModelSelector.family ?? ""}` : unknownModel}`
-				case "together":
-					return `${selectedProvider}:${togetherModelId}`
-				case "lmstudio":
-					return `${selectedProvider}:${lmStudioModelId}`
-				case "ollama":
-					return `${selectedProvider}:${ollamaModelId}`
-				case "litellm":
-					return `${selectedProvider}:${liteLlmModelId}`
-				case "requesty":
-					return `${selectedProvider}:${requestyModelId}`
-				case "anthropic":
-				case "openrouter":
-				default:
-					return `${selectedProvider}:${selectedModelId}`
-			}
-		}, [apiConfiguration, mode])
-
-		// Calculate arrow position and menu position based on button location
-		useEffect(() => {
-			if (showModelSelector && buttonRef.current) {
-				const buttonRect = buttonRef.current.getBoundingClientRect()
-				const buttonCenter = buttonRect.left + buttonRect.width / 2
-
-				// Calculate distance from right edge of viewport using viewport coordinates
-				const rightPosition = document.documentElement.clientWidth - buttonCenter - 5
-
-				setArrowPosition(rightPosition)
-				setMenuPosition(buttonRect.top + 1) // Added +1 to move menu down by 1px
-			}
-		}, [showModelSelector, viewportWidth, viewportHeight])
-
-		useEffect(() => {
-			if (!showModelSelector) {
-				// Attempt to save if possible
-				// NOTE: we cannot call this here since it will create an infinite loop between this effect and the callback since getLatestState will update state. Instead we should submitapiconfig when the menu is explicitly closed, rather than as an effect of showModelSelector changing.
-				// handleApiConfigSubmit()
-
-				// Reset any active styling by blurring the button
-				const button = buttonRef.current?.querySelector("a")
-				if (button) {
-					button.blur()
-				}
-			}
-		}, [showModelSelector])
 
 		// Function to show error message for unsupported files for drag and drop
 		const showUnsupportedFileErrorMessage = () => {
@@ -1058,56 +809,10 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 							<ClineRulesToggleModal />
 
-							<ModelContainer ref={modelSelectorRef}>
-								<ModelPickerModal
-									currentMode={mode}
-									isOpen={showModelSelector}
-									onOpenChange={setShowModelSelector}>
-									<ModelButtonWrapper ref={buttonRef}>
-										<ModelDisplayButton
-											disabled={false}
-											isActive={showModelSelector}
-											onClick={handleModelButtonClick}
-											role="button"
-											tabIndex={0}
-											title="Select Model / API Provider">
-											<ModelButtonContent className="text-xs">{modelDisplayName}</ModelButtonContent>
-										</ModelDisplayButton>
-									</ModelButtonWrapper>
-								</ModelPickerModal>
-							</ModelContainer>
+							<ModelContainer ref={modelSelectorRef} />
 						</ButtonGroup>
 					</div>
 					{/* Tooltip for Plan/Act toggle remains outside the conditional rendering */}
-					<Tooltip>
-						<TooltipContent
-							className="text-xs px-2 flex flex-col gap-1"
-							hidden={shownTooltipMode === null}
-							side="top">
-							{`In ${shownTooltipMode === "act" ? "Act" : "Plan"}  mode, Cline will ${shownTooltipMode === "act" ? "complete the task immediately" : "gather information to architect a plan"}`}
-							<p className="text-description/80 text-xs mb-0">
-								Toggle w/ <kbd className="text-muted-foreground mx-1">{togglePlanActKeys}</kbd>
-							</p>
-						</TooltipContent>
-						<TooltipTrigger>
-							<SwitchContainer data-testid="mode-switch" disabled={false} onClick={onModeToggle}>
-								<Slider isAct={mode === "act"} isPlan={mode === "plan"} />
-								{["Plan", "Act"].map((m) => (
-									<div
-										aria-checked={mode === m.toLowerCase()}
-										className={cn(
-											"pt-0.5 pb-px px-2 z-10 text-xs w-1/2 text-center bg-transparent",
-											mode === m.toLowerCase() ? "text-white" : "text-input-foreground",
-										)}
-										onMouseLeave={() => setShownTooltipMode(null)}
-										onMouseOver={() => setShownTooltipMode(m.toLowerCase() === "plan" ? "plan" : "act")}
-										role="switch">
-										{m}
-									</div>
-								))}
-							</SwitchContainer>
-						</TooltipTrigger>
-					</Tooltip>
 				</div>
 			</div>
 		)

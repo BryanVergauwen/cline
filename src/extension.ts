@@ -7,7 +7,6 @@ import * as vscode from "vscode"
 import { sendAccountButtonClickedEvent } from "./core/controller/ui/subscribeToAccountButtonClicked"
 import { sendChatButtonClickedEvent } from "./core/controller/ui/subscribeToChatButtonClicked"
 import { sendMcpButtonClickedEvent } from "./core/controller/ui/subscribeToMcpButtonClicked"
-import { sendSettingsButtonClickedEvent } from "./core/controller/ui/subscribeToSettingsButtonClicked"
 import { WebviewProvider } from "./core/webview"
 import { createClineAPI } from "./exports"
 import { Logger } from "./services/logging/Logger"
@@ -103,7 +102,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Auto-open the Cline sidebar on startup.
 	// Note: VS Code/Cursor does not provide an API to force the sidebar width, but we can reveal/focus the view.
 	setTimeout(() => {
-		vscode.commands.executeCommand(`${ExtensionRegistryInfo.views.Sidebar}.focus`).catch(() => {
+		vscode.commands.executeCommand(`${ExtensionRegistryInfo.views.Sidebar}.focus`).then(undefined, () => {
 			// Ignore if the command isn't available yet
 		})
 	}, 0)
@@ -136,12 +135,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.McpButton, () => {
 			sendMcpButtonClickedEvent()
-		}),
-	)
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand(commands.SettingsButton, () => {
-			sendSettingsButtonClickedEvent()
 		}),
 	)
 

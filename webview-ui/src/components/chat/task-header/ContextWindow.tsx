@@ -1,7 +1,6 @@
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import debounce from "debounce"
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { updateSetting } from "@/components/settings/utils/settingsHandlers"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { Progress } from "@/components/ui/progress"
 import { formatLargeNumber as formatTokenNumber } from "@/utils/format"
@@ -91,7 +90,6 @@ const ContextWindow: React.FC<ContextWindowProgressProps> = ({
 		const newThreshold = Math.round(percentage * 100) / 100
 		setConfirmationNeeded(false)
 		setThreshold(newThreshold)
-		updateSetting("autoCondenseThreshold", newThreshold)
 	}, [])
 
 	const handleCompactClick = useCallback(
@@ -169,7 +167,6 @@ const ContextWindow: React.FC<ContextWindowProgressProps> = ({
 
 			if (newThreshold !== threshold) {
 				setThreshold(newThreshold)
-				updateSetting("autoCondenseThreshold", newThreshold)
 			}
 		},
 		[threshold, useAutoCondense, setIsOpened],
