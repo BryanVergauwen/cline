@@ -136,7 +136,6 @@ export class Task {
 	readonly ulid: string
 	private taskIsFavorited?: boolean
 	private cwd: string
-	private taskInitializationStartTime: number
 
 	taskState: TaskState
 
@@ -264,7 +263,6 @@ export class Task {
 			taskLockAcquired,
 		} = params
 
-		this.taskInitializationStartTime = performance.now()
 		this.taskState = new TaskState()
 		this.controller = controller
 		this.mcpHub = mcpHub

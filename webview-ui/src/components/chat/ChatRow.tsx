@@ -53,11 +53,6 @@ const ChatRowContainer = styled.div`
 	padding: 10px 6px 10px 15px;
 	position: relative;
 
-	/* Fade-in animation for hook messages being inserted */
-	&.hook-message-animate {
-		animation: hookFadeSlideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-	}
-
 	@keyframes hookFadeSlideIn {
 		from {
 			opacity: 0;
@@ -548,15 +543,13 @@ export const ChatRowContent = memo(
 				green: "var(--vscode-charts-green)",
 			}
 
-			const isToolError = (() => {
+			const showToolDetails = (() => {
 				const content = tool?.content
 				if (typeof content !== "string") {
 					return false
 				}
 				return content.includes("The tool execution failed") || content.includes("<error>")
 			})()
-
-			const showToolDetails = isToolError
 			const toolIcon = (name: string, color?: string, rotation?: number, title?: string) => (
 				<span
 					className={`codicon codicon-${name} ph-no-capture`}
@@ -592,7 +585,6 @@ export const ChatRowContent = memo(
 										{tool.path ? ` ${cleanPathPrefix(tool.path)}` : ""}
 									</span>
 								</div>
-								{renderRequestPill(JSON.stringify(tool, null, 2))}
 							</div>
 							{tool.path && tool.content ? (
 								<DiffEditRow
@@ -1168,26 +1160,7 @@ export const ChatRowContent = memo(
 								</div>
 							</div>
 						)}
-						{/* {output.length > 0 && (
-							<div style={{ width: "100%" }}>
-								<div
-									onClick={handleToggle}
-									style={{
-										display: "flex",
-										alignItems: "center",
-										gap: "4px",
-										width: "100%",
-										justifyContent: "flex-start",
-										cursor: "pointer",
-										padding: `2px 8px ${isExpanded ? 0 : 8}px 8px`,
-									}}>
-									<span className={`codicon codicon-chevron-${isExpanded ? "down" : "right"}`}></span>
-									<span style={{ fontSize: "0.8em" }}>
-										{isSubagentCommand ? "Subagent Output" : "Command Output"}
-									</span>
-								</div>
-							</div>
-						)} */}
+						{}
 						{!isSubagentCommand && (
 							<div style={{ opacity: 0.6, backgroundColor: CHAT_ROW_EXPANDED_BG_COLOR }}>
 								<div style={{ backgroundColor: CHAT_ROW_EXPANDED_BG_COLOR }}>
