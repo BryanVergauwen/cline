@@ -11,7 +11,7 @@ import { getAsVar, VSC_INACTIVE_SELECTION_BACKGROUND } from "@/utils/vscStyles"
 export const CURRENT_CLI_BANNER_VERSION = 1
 
 export const CliInstallBanner: React.FC = () => {
-	const { navigateToSettings, subagentsEnabled } = useExtensionState()
+	const { subagentsEnabled } = useExtensionState()
 	const [isCopied, setIsCopied] = useState(false)
 	const [isClineCliInstalled, setIsClineCliInstalled] = useState(false)
 
@@ -58,12 +58,6 @@ export const CliInstallBanner: React.FC = () => {
 			} catch (error) {
 				console.error("Failed to initiate CLI installation:", error)
 			}
-		}
-	}
-
-	const handleEnableSubagents = () => {
-		if (!subagentsEnabled) {
-			navigateToSettings("features")
 		}
 	}
 
@@ -158,7 +152,7 @@ export const CliInstallBanner: React.FC = () => {
 							appearance="primary"
 							className="flex-1"
 							disabled={subagentsEnabled}
-							onClick={handleEnableSubagents}
+							onClick={() => {}}
 							title="Configure Subagents">
 							Enable Subagents
 						</VSCodeButton>

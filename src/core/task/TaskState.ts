@@ -43,7 +43,6 @@ export class TaskState {
 	// Error tracking
 	consecutiveMistakeCount: number = 0
 	didAutomaticallyRetryFailedApiRequest = false
-	checkpointManagerErrorMessage?: string
 
 	// Retry tracking for auto-retry feature
 	autoRetryAttempts: number = 0

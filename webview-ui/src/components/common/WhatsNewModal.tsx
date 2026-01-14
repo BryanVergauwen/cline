@@ -1,12 +1,8 @@
 import { Button } from "@components/ui/button"
-import { EmptyRequest } from "@shared/proto/cline/common"
 import React, { useCallback, useRef } from "react"
 import { useMount } from "react-use"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { useClineAuth } from "@/context/ClineAuthContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { AccountServiceClient } from "@/services/grpc-client"
-import { useApiConfigurationHandlers } from "../settings/utils/useApiConfigurationHandlers"
 
 interface WhatsNewModalProps {
 	open: boolean
@@ -15,9 +11,7 @@ interface WhatsNewModalProps {
 }
 
 export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ open, onClose, version }) => {
-	const { clineUser } = useClineAuth()
-	const { openRouterModels, setShowChatModelSelector, refreshOpenRouterModels } = useExtensionState()
-	const { handleFieldsChange } = useApiConfigurationHandlers()
+	const { setShowChatModelSelector, refreshOpenRouterModels } = useExtensionState()
 
 	const clickedModelsRef = useRef<Set<string>>(new Set())
 
@@ -26,27 +20,12 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ open, onClose, ver
 
 	const setModel = useCallback(
 		(modelId: string) => {
-			handleFieldsChange({
-				planModeOpenRouterModelId: modelId,
-				actModeOpenRouterModelId: modelId,
-				planModeOpenRouterModelInfo: openRouterModels[modelId],
-				actModeOpenRouterModelInfo: openRouterModels[modelId],
-				planModeApiProvider: "cline",
-				actModeApiProvider: "cline",
-			})
-
 			clickedModelsRef.current.add(modelId)
 			setShowChatModelSelector(true)
 			onClose()
 		},
-		[handleFieldsChange, openRouterModels, setShowChatModelSelector, onClose],
+		[setShowChatModelSelector, onClose],
 	)
-
-	const handleShowAccount = useCallback(() => {
-		AccountServiceClient.accountLoginClicked(EmptyRequest.create()).catch((err) =>
-			console.error("Failed to get login URL:", err),
-		)
-	}, [])
 
 	const ModelButton: React.FC<{ modelId: string; label: string }> = ({ modelId, label }) => {
 		const isClicked = clickedModelsRef.current.has(modelId)
@@ -61,14 +40,9 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ open, onClose, ver
 		)
 	}
 
-	const AuthButton: React.FC<{ children: React.ReactNode }> = ({ children }) =>
-		clineUser ? (
-			<div className="flex gap-2 flex-wrap">{children}</div>
-		) : (
-			<Button className="my-1" onClick={handleShowAccount} size="sm">
-				Sign Up with Cline
-			</Button>
-		)
+	const AuthButton: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+		<div className="flex gap-2 flex-wrap">{children}</div>
+	)
 
 	return (
 		<Dialog onOpenChange={(isOpen) => !isOpen && onClose()} open={open}>

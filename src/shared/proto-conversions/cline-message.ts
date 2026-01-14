@@ -97,7 +97,6 @@ function convertClineSayToProtoEnum(say: AppClineSay | undefined): ClineSay | un
 		diff_error: ClineSay.DIFF_ERROR,
 		deleted_api_reqs: ClineSay.DELETED_API_REQS,
 		clineignore_error: ClineSay.CLINEIGNORE_ERROR,
-		checkpoint_created: ClineSay.CHECKPOINT_CREATED,
 		load_mcp_documentation: ClineSay.LOAD_MCP_DOCUMENTATION,
 		info: ClineSay.INFO,
 		task_progress: ClineSay.TASK_PROGRESS,
@@ -121,7 +120,7 @@ function convertProtoEnumToClineSay(say: ClineSay): AppClineSay | undefined {
 		return undefined
 	}
 
-	const mapping: Record<Exclude<ClineSay, ClineSay.UNRECOGNIZED>, AppClineSay> = {
+	const mapping: Partial<Record<Exclude<ClineSay, ClineSay.UNRECOGNIZED>, AppClineSay>> = {
 		[ClineSay.TASK]: "task",
 		[ClineSay.ERROR]: "error",
 		[ClineSay.API_REQ_STARTED]: "api_req_started",
@@ -146,7 +145,6 @@ function convertProtoEnumToClineSay(say: ClineSay): AppClineSay | undefined {
 		[ClineSay.DIFF_ERROR]: "diff_error",
 		[ClineSay.DELETED_API_REQS]: "deleted_api_reqs",
 		[ClineSay.CLINEIGNORE_ERROR]: "clineignore_error",
-		[ClineSay.CHECKPOINT_CREATED]: "checkpoint_created",
 		[ClineSay.LOAD_MCP_DOCUMENTATION]: "load_mcp_documentation",
 		[ClineSay.INFO]: "info",
 		[ClineSay.TASK_PROGRESS]: "task_progress",
@@ -185,8 +183,8 @@ export function convertClineMessageToProto(message: AppClineMessage): ProtoCline
 		images: message.images ?? [],
 		files: message.files ?? [],
 		partial: message.partial ?? false,
-		lastCheckpointHash: message.lastCheckpointHash ?? "",
-		isCheckpointCheckedOut: message.isCheckpointCheckedOut ?? false,
+		lastCheckpointHash: "",
+		isCheckpointCheckedOut: false,
 		isOperationOutsideWorkspace: message.isOperationOutsideWorkspace ?? false,
 		conversationHistoryIndex: message.conversationHistoryIndex ?? 0,
 		conversationHistoryDeletedRange: message.conversationHistoryDeletedRange
@@ -250,12 +248,6 @@ export function convertProtoToClineMessage(protoMessage: ProtoClineMessage): App
 	}
 	if (protoMessage.partial) {
 		message.partial = protoMessage.partial
-	}
-	if (protoMessage.lastCheckpointHash !== "") {
-		message.lastCheckpointHash = protoMessage.lastCheckpointHash
-	}
-	if (protoMessage.isCheckpointCheckedOut) {
-		message.isCheckpointCheckedOut = protoMessage.isCheckpointCheckedOut
 	}
 	if (protoMessage.isOperationOutsideWorkspace) {
 		message.isOperationOutsideWorkspace = protoMessage.isOperationOutsideWorkspace

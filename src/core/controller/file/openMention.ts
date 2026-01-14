@@ -1,5 +1,4 @@
 import { Empty, StringRequest } from "@shared/proto/cline/common"
-import { openMention as coreOpenMention } from "../../mentions"
 import { Controller } from ".."
 
 /**
@@ -9,6 +8,6 @@ import { Controller } from ".."
  * @returns Empty response
  */
 export async function openMention(_controller: Controller, request: StringRequest): Promise<Empty> {
-	coreOpenMention(request.value)
+	void request
 	return Empty.create()
 }

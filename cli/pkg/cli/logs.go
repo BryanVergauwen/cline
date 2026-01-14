@@ -25,8 +25,8 @@ func NewLogsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "logs",
 		Aliases: []string{"log", "l"},
-		Short:   "Manage Cline log files",
-		Long:    `List and manage log files created by Cline instances.`,
+		Short:   "Manage log files",
+		Long:    `List and manage log files created by instances.`,
 	}
 
 	cmd.AddCommand(newLogsListCommand())

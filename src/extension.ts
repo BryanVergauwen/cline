@@ -6,9 +6,7 @@ import { DIFF_VIEW_URI_SCHEME } from "@hosts/vscode/VscodeDiffViewProvider"
 import * as vscode from "vscode"
 import { sendAccountButtonClickedEvent } from "./core/controller/ui/subscribeToAccountButtonClicked"
 import { sendChatButtonClickedEvent } from "./core/controller/ui/subscribeToChatButtonClicked"
-import { sendHistoryButtonClickedEvent } from "./core/controller/ui/subscribeToHistoryButtonClicked"
 import { sendMcpButtonClickedEvent } from "./core/controller/ui/subscribeToMcpButtonClicked"
-import { sendSettingsButtonClickedEvent } from "./core/controller/ui/subscribeToSettingsButtonClicked"
 import { WebviewProvider } from "./core/webview"
 import { createClineAPI } from "./exports"
 import { Logger } from "./services/logging/Logger"
@@ -101,7 +99,27 @@ export async function activate(context: vscode.ExtensionContext) {
 		}),
 	)
 
+	// Auto-open the Cline sidebar on startup.
+	// Note: VS Code/Cursor does not provide an API to force the sidebar width, but we can reveal/focus the view.
+	setTimeout(() => {
+		vscode.commands.executeCommand(`${ExtensionRegistryInfo.views.Sidebar}.focus`).then(undefined, () => {
+			// Ignore if the command isn't available yet
+		})
+	}, 0)
+
 	const { commands } = ExtensionRegistryInfo
+
+	context.subscriptions.push(
+		vscode.debug.onDidStartDebugSession(async () => {
+			try {
+				await vscode.commands.executeCommand("workbench.action.enterZenMode")
+				await vscode.commands.executeCommand("workbench.action.maximizeEditor")
+				await focusChatInput()
+			} catch (error) {
+				console.error("Failed to enter Zen Mode on debug start:", error)
+			}
+		}),
+	)
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.PlusButton, async () => {
@@ -117,19 +135,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.McpButton, () => {
 			sendMcpButtonClickedEvent()
-		}),
-	)
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand(commands.SettingsButton, () => {
-			sendSettingsButtonClickedEvent()
-		}),
-	)
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand(commands.HistoryButton, async () => {
-			// Send event to all subscribers using the gRPC streaming method
-			await sendHistoryButtonClickedEvent()
 		}),
 	)
 

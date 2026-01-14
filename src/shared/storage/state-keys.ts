@@ -11,7 +11,6 @@ import { GlobalInstructionsFile } from "@shared/remote-config/schema"
 import { Mode, OpenaiReasoningEffort } from "@shared/storage/types"
 import { TelemetrySetting } from "@shared/TelemetrySetting"
 import { UserInfo } from "@shared/UserInfo"
-import { LanguageModelChatSelector } from "vscode"
 export type SecretKey = keyof Secrets
 
 export type GlobalStateKey = keyof GlobalState
@@ -97,7 +96,6 @@ export interface Settings {
 	telemetrySetting: TelemetrySetting
 	asksageApiUrl: string | undefined
 	planActSeparateModelsSetting: boolean
-	enableCheckpointsSetting: boolean
 	requestTimeoutMs: number | undefined
 	shellIntegrationTimeout: number
 	defaultTerminalProfile: string
@@ -140,7 +138,7 @@ export interface Settings {
 	planModeThinkingBudgetTokens: number | undefined
 	geminiPlanModeThinkingLevel: string | undefined
 	planModeReasoningEffort: string | undefined
-	planModeVsCodeLmModelSelector: LanguageModelChatSelector | undefined
+	planModeVsCodeLmModelSelector: any | undefined
 	planModeAwsBedrockCustomSelected: boolean | undefined
 	planModeAwsBedrockCustomModelBaseId: string | undefined
 	planModeOpenRouterModelId: string | undefined
@@ -178,7 +176,7 @@ export interface Settings {
 	actModeThinkingBudgetTokens: number | undefined
 	geminiActModeThinkingLevel: string | undefined
 	actModeReasoningEffort: string | undefined
-	actModeVsCodeLmModelSelector: LanguageModelChatSelector | undefined
+	actModeVsCodeLmModelSelector: any | undefined
 	actModeAwsBedrockCustomSelected: boolean | undefined
 	actModeAwsBedrockCustomModelBaseId: string | undefined
 	actModeOpenRouterModelId: string | undefined

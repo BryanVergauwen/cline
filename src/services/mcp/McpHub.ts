@@ -44,6 +44,7 @@ import { DEFAULT_REQUEST_TIMEOUT_MS } from "./constants"
 import { McpOAuthManager } from "./McpOAuthManager"
 import { BaseConfigSchema, McpSettingsSchema, ServerConfigSchema } from "./schemas"
 import { McpConnection, McpServerConfig, Transport } from "./types"
+
 export class McpHub {
 	getMcpServersPath: () => Promise<string>
 	private getSettingsDirectoryPath: () => Promise<string>
@@ -613,8 +614,7 @@ export class McpHub {
 	}
 
 	private appendErrorMessage(connection: McpConnection, error: string) {
-		const newError = connection.server.error ? `${connection.server.error}\n${error}` : error
-		connection.server.error = newError //.slice(0, 800)
+		connection.server.error = connection.server.error ? `${connection.server.error}\n${error}` : error
 	}
 
 	private async fetchToolsList(serverName: string): Promise<McpTool[]> {
@@ -641,12 +641,10 @@ export class McpHub {
 			const autoApproveConfig = config.mcpServers[serverName]?.autoApprove || []
 
 			// Mark tools as always allowed based on settings
-			const tools = (response?.tools || []).map((tool) => ({
+			return (response?.tools || []).map((tool) => ({
 				...tool,
 				autoApprove: autoApproveConfig.includes(tool.name),
 			}))
-
-			return tools
 		} catch (error) {
 			console.error(`Failed to fetch tools for ${serverName}:`, error)
 			return []
@@ -1016,10 +1014,6 @@ export class McpHub {
 		})
 	}
 
-	async sendLatestMcpServers() {
-		await this.notifyWebviewOfServerChanges()
-	}
-
 	async getLatestMcpServersRPC(): Promise<McpServer[]> {
 		const settings = await this.readAndValidateMcpSettingsFile()
 		if (!settings) {
@@ -1316,9 +1310,7 @@ export class McpHub {
 				throw new Error(`Invalid server URL: ${expandedConfig.url}. Please provide a valid URL.`)
 			}
 
-			const parsedConfig = ServerConfigSchema.parse(expandedConfig)
-
-			settings.mcpServers[serverName] = parsedConfig
+			settings.mcpServers[serverName] = ServerConfigSchema.parse(expandedConfig)
 			const settingsPath = await this.getMcpSettingsFilePath()
 
 			// We don't write the zod-transformed version to the file.

@@ -1,7 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk"
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
-import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
 import { telemetryService } from "@services/telemetry"
 import { findLastIndex } from "@shared/array"
@@ -221,7 +220,8 @@ export class AttemptCompletionHandler implements IToolHandler, IPartialBlockHand
 			})
 		}
 
-		const fileContentString = completionFiles?.length ? await processFilesIntoText(completionFiles) : ""
+		const fileContentString = ""
+		void completionFiles
 		if (fileContentString) {
 			toolResults.push({
 				type: "text" as const,

@@ -2,7 +2,7 @@ import path from "node:path"
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { getWorkspaceBasename, resolveWorkspacePath } from "@core/workspace"
-import { extractFileContent } from "@integrations/misc/extract-file-content"
+import { extractFileContent, extractFileContentWithRange } from "@integrations/misc/extract-file-content"
 import { arePathsEqual, getReadablePath, isLocatedInWorkspace } from "@utils/path"
 import { telemetryService } from "@/services/telemetry"
 import { ClineSayTool } from "@/shared/ExtensionMessage"
@@ -26,14 +26,38 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 
 	async handlePartialBlock(block: ToolUse, uiHelpers: StronglyTypedUIHelpers): Promise<void> {
 		const relPath = block.params.path
+		const startLineRaw = block.params.start_line
+		const endLineRaw = block.params.end_line
 
 		const config = uiHelpers.getConfig()
+
+		const parseOptionalLineRange = ():
+			| {
+					startLine?: number
+					endLine?: number
+			  }
+			| undefined => {
+			if (startLineRaw == null && endLineRaw == null) {
+				return undefined
+			}
+			if (startLineRaw == null || endLineRaw == null) {
+				return undefined
+			}
+			const startLine = Number.parseInt(String(startLineRaw), 10)
+			const endLine = Number.parseInt(String(endLineRaw), 10)
+			if (!Number.isFinite(startLine) || !Number.isFinite(endLine)) {
+				return undefined
+			}
+			return { startLine, endLine }
+		}
+		const parsedRange = parseOptionalLineRange()
 
 		// Create and show partial UI message
 		const sharedMessageProps = {
 			tool: "readFile",
 			path: getReadablePath(config.cwd, uiHelpers.removeClosingTag(block, "path", relPath)),
 			content: undefined,
+			...(parsedRange ? { startLine: parsedRange.startLine, endLine: parsedRange.endLine } : {}),
 			operationIsLocatedInWorkspace: await isLocatedInWorkspace(relPath),
 		}
 
@@ -51,6 +75,8 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
 		const relPath: string | undefined = block.params.path
+		const startLineRaw = block.params.start_line
+		const endLineRaw = block.params.end_line
 
 		// Extract provider information for telemetry
 		const apiConfig = config.services.stateManager.getApiConfiguration()
@@ -92,6 +118,12 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 			tool: "readFile",
 			path: getReadablePath(config.cwd, displayPath),
 			content: absolutePath,
+			...(startLineRaw != null && endLineRaw != null
+				? {
+						startLine: Number.parseInt(String(startLineRaw), 10),
+						endLine: Number.parseInt(String(endLineRaw), 10),
+					}
+				: {}),
 			operationIsLocatedInWorkspace: await isLocatedInWorkspace(relPath!),
 		} satisfies ClineSayTool
 
@@ -161,9 +193,33 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 			throw error
 		}
 
+		const parseRequiredLineRange = (): { startLine: number; endLine: number } | undefined => {
+			if (startLineRaw == null && endLineRaw == null) {
+				return undefined
+			}
+			if (startLineRaw == null || endLineRaw == null) {
+				throw new Error("start_line and end_line must be provided together")
+			}
+			const startLine = Number.parseInt(String(startLineRaw), 10)
+			const endLine = Number.parseInt(String(endLineRaw), 10)
+			if (!Number.isInteger(startLine) || !Number.isInteger(endLine) || startLine < 1 || endLine < startLine) {
+				throw new Error("Invalid line range")
+			}
+			return { startLine, endLine }
+		}
+
 		// Execute the actual file read operation
 		const supportsImages = config.api.getModel().info.supportsImages ?? false
-		const fileContent = await extractFileContent(absolutePath, supportsImages)
+		let fileContent: { text: string; imageBlock?: any }
+		try {
+			const range = parseRequiredLineRange()
+			fileContent = range
+				? await extractFileContentWithRange(absolutePath, supportsImages, range)
+				: await extractFileContent(absolutePath, supportsImages)
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : "Unknown error"
+			return formatResponse.toolError(`Failed to read file: ${errorMessage}`)
+		}
 
 		// Track file read operation
 		await config.services.fileContextTracker.trackFileContext(relPath!, "read_tool")

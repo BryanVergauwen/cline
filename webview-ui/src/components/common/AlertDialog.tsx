@@ -1,7 +1,8 @@
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import { AlertTriangle } from "lucide-react"
 import React, { ReactNode } from "react"
-import { OPENROUTER_MODEL_PICKER_Z_INDEX } from "../settings/OpenRouterModelPicker"
+
+const OPENROUTER_MODEL_PICKER_Z_INDEX = 1000
 
 interface AlertDialogProps {
 	open: boolean

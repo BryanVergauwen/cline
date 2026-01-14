@@ -128,6 +128,14 @@ export async function updateApiConfiguration(controller: Controller, request: Up
 			}
 		}
 
+		// Ollama-only enforcement: never allow other providers to be persisted.
+		if (options.planModeApiProvider && options.planModeApiProvider !== "ollama") {
+			options.planModeApiProvider = "ollama"
+		}
+		if (options.actModeApiProvider && options.actModeApiProvider !== "ollama") {
+			options.actModeApiProvider = "ollama"
+		}
+
 		// Update storage using batch methods
 		if (Object.keys(secrets).length > 0) {
 			controller.stateManager.setSecretsBatch(secrets)

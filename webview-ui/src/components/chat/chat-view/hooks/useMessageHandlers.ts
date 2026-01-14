@@ -28,8 +28,12 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 	// Handle sending a message
 	const handleSendMessage = useCallback(
 		async (text: string, images: string[], files: string[]) => {
+			// File attachments are disabled in this Ollama-only build
+			const safeFiles: string[] = []
+			// Image attachments are disabled in this Ollama-only build
+			const safeImages: string[] = []
 			let messageToSend = text.trim()
-			const hasContent = messageToSend || images.length > 0 || files.length > 0
+			const hasContent = messageToSend
 
 			// Prepend the active quote if it exists
 			if (activeQuote && hasContent) {
@@ -47,8 +51,8 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 					await TaskServiceClient.newTask(
 						NewTaskRequest.create({
 							text: messageToSend,
-							images,
-							files,
+							images: safeImages,
+							files: safeFiles,
 						}),
 					)
 					messageSent = true
@@ -60,8 +64,8 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 							AskResponseRequest.create({
 								responseType: "yesButtonClicked",
 								text: messageToSend,
-								images,
-								files,
+								images: safeImages,
+								files: safeFiles,
 							}),
 						)
 						messageSent = true
@@ -85,8 +89,8 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 									AskResponseRequest.create({
 										responseType: "messageResponse",
 										text: messageToSend,
-										images,
-										files,
+										images: safeImages,
+										files: safeFiles,
 									}),
 								)
 								messageSent = true
@@ -106,8 +110,8 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 							AskResponseRequest.create({
 								responseType: "messageResponse",
 								text: messageToSend,
-								images,
-								files,
+								images: [], // Always send empty images array
+								files: [], // Always send empty files array
 							}),
 						)
 						messageSent = true
@@ -162,7 +166,9 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 	const executeButtonAction = useCallback(
 		async (actionType: ButtonActionType, text?: string, images?: string[], files?: string[]) => {
 			const trimmedInput = text?.trim()
-			const hasContent = trimmedInput || (images && images.length > 0) || (files && files.length > 0)
+			const hasContent = trimmedInput
+			const safeImages: string[] = []
+			const safeFiles: string[] = []
 
 			switch (actionType) {
 				case "retry":
@@ -180,8 +186,8 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 							AskResponseRequest.create({
 								responseType: "yesButtonClicked",
 								text: trimmedInput,
-								images: images,
-								files: files,
+								images: safeImages,
+								files: safeFiles,
 							}),
 						)
 					} else {
@@ -200,8 +206,8 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 							AskResponseRequest.create({
 								responseType: "noButtonClicked",
 								text: trimmedInput,
-								images: images,
-								files: files,
+								images: safeImages,
+								files: safeFiles,
 							}),
 						)
 					} else {
@@ -220,8 +226,8 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 							AskResponseRequest.create({
 								responseType: "yesButtonClicked",
 								text: trimmedInput,
-								images: images,
-								files: files,
+								images: safeImages,
+								files: safeFiles,
 							}),
 						)
 					} else {

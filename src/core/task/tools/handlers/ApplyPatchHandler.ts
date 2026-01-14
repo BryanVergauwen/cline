@@ -1,7 +1,6 @@
 import { readFile } from "node:fs/promises"
 import type { ToolUse } from "@core/assistant-message"
 import { resolveWorkspacePath } from "@core/workspace"
-import { processFilesIntoText } from "@integrations/misc/extract-text"
 import type { ClineSayTool } from "@shared/ExtensionMessage"
 import { fileExistsAtPath } from "@utils/fs"
 import { getReadablePath, isLocatedInWorkspace } from "@utils/path"
@@ -686,8 +685,7 @@ export class ApplyPatchHandler implements IFullyManagedTool {
 		const { response, text, images, files } = await config.callbacks.ask("tool", completeMessage, false)
 
 		if (text || images?.length || files?.length) {
-			const fileContent = files?.length ? await processFilesIntoText(files) : ""
-			ToolResultUtils.pushAdditionalToolFeedback(config.taskState.userMessageContent, text, images, fileContent)
+			ToolResultUtils.pushAdditionalToolFeedback(config.taskState.userMessageContent, text, images, "")
 			await config.callbacks.say("user_feedback", text, images, files)
 		}
 

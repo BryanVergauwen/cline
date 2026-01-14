@@ -10,8 +10,6 @@ import { Item, ItemContent, ItemDescription, ItemHeader, ItemMedia, ItemTitle } 
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { cn } from "@/lib/utils"
 import { AccountServiceClient, StateServiceClient } from "@/services/grpc-client"
-import ApiConfigurationSection from "../settings/sections/ApiConfigurationSection"
-import { useApiConfigurationHandlers } from "../settings/utils/useApiConfigurationHandlers"
 import {
 	getCapabilities,
 	getClineUIOnboardingGroups,
@@ -267,12 +265,11 @@ const OnboardingStepContent = ({
 		)
 	}
 	// userType === NEW_USER_TYPE.BYOK
-	return <ApiConfigurationSection />
+	return null
 }
 
 const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingModelGroup }) => {
-	const { handleFieldsChange } = useApiConfigurationHandlers()
-	const { openRouterModels, hideSettings, hideAccount, setShowWelcome } = useExtensionState()
+	const { openRouterModels, setShowWelcome } = useExtensionState()
 
 	const [stepNumber, setStepNumber] = useState(0)
 	const [isActionLoading, setIsActionLoading] = useState(false)
@@ -309,26 +306,11 @@ const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingMode
 		StateServiceClient.captureOnboardingProgress({ step: 1, modelSelected, action: "model_selected" })
 	}, [])
 
-	const finishOnboarding = useCallback(
-		async (updateModelId: boolean, step: number) => {
-			const modelSelected = (updateModelId && selectedModelId) || undefined
-			if (modelSelected) {
-				await handleFieldsChange({
-					planModeOpenRouterModelId: selectedModelId,
-					actModeOpenRouterModelId: selectedModelId,
-					planModeOpenRouterModelInfo: openRouterModels[selectedModelId],
-					actModeOpenRouterModelInfo: openRouterModels[selectedModelId],
-					planModeApiProvider: "cline",
-					actModeApiProvider: "cline",
-				})
-			}
-			hideAccount()
-			hideSettings()
-			const action = "onboarding_completed"
-			StateServiceClient.captureOnboardingProgress({ step, modelSelected, action, completed: true })
-		},
-		[hideAccount, hideSettings, handleFieldsChange, selectedModelId, openRouterModels],
-	)
+	const finishOnboarding = useCallback(async (updateModelId: boolean, step: number) => {
+		const modelSelected = (updateModelId && selectedModelId) || undefined
+		const action = "onboarding_completed"
+		StateServiceClient.captureOnboardingProgress({ step, modelSelected, action, completed: true })
+	}, [])
 
 	const handleFooterAction = useCallback(
 		async (action: "signin" | "next" | "back" | "done" | "signup") => {
@@ -416,7 +398,7 @@ const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingMode
 
 					{stepNumber !== 2 && (
 						<div className="items-center justify-center flex text-sm text-foreground gap-2 mb-3 text-pretty">
-							<AlertCircleIcon className="shrink-0 size-2" /> You can change this later in settings
+							<AlertCircleIcon className="shrink-0 size-2" /> You can change this later
 						</div>
 					)}
 				</footer>

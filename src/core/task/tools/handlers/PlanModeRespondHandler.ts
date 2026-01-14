@@ -127,11 +127,8 @@ export class PlanModeRespondHandler implements IToolHandler, IPartialBlockHandle
 			}
 		}
 
-		let fileContentString = ""
-		if (planResponseFiles && planResponseFiles.length > 0) {
-			const { processFilesIntoText } = await import("@integrations/misc/extract-text")
-			fileContentString = await processFilesIntoText(planResponseFiles)
-		}
+		const fileContentString = ""
+		void planResponseFiles
 
 		// Handle mode switching response
 		if (config.taskState.didRespondToPlanAskBySwitchingMode) {

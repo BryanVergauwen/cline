@@ -38,9 +38,10 @@ interface DiffEditRowProps {
 	patch: string
 	path: string
 	isLoading?: boolean
+	collapsible?: boolean
 }
 
-export const DiffEditRow = memo<DiffEditRowProps>(({ patch, path, isLoading }) => {
+export const DiffEditRow = memo<DiffEditRowProps>(({ patch, path, isLoading, collapsible = true }) => {
 	const { parsedFiles, isStreaming } = useMemo(() => {
 		const parsed = parsePatch(patch, path)
 		return {
@@ -56,14 +57,14 @@ export const DiffEditRow = memo<DiffEditRowProps>(({ patch, path, isLoading }) =
 	return (
 		<div className="space-y-4 border border-code-block-background/70 rounded-xs">
 			{parsedFiles.map((file) => (
-				<FileBlock file={file} isStreaming={isStreaming} key={file.path} />
+				<FileBlock collapsible={collapsible} file={file} isStreaming={isStreaming} key={file.path} />
 			))}
 		</div>
 	)
 })
 
-const FileBlock = memo<{ file: Patch; isStreaming: boolean }>(
-	({ file, isStreaming }) => {
+const FileBlock = memo<{ file: Patch; isStreaming: boolean; collapsible: boolean }>(
+	({ file, isStreaming, collapsible }) => {
 		const [isExpanded, setIsExpanded] = useState(true)
 		const scrollContainerRef = useRef<HTMLDivElement>(null)
 		const shouldFollowRef = useRef(true)
@@ -97,22 +98,36 @@ const FileBlock = memo<{ file: Patch; isStreaming: boolean }>(
 		const actionStyle = ACTION_STYLES[file.action as keyof typeof ACTION_STYLES] ?? ACTION_STYLES.default
 		const ActionIcon = actionStyle.icon
 
+		const shouldShowDiff = collapsible ? isExpanded : true
+
 		return (
 			<div className="p-1 bg-code rounded-xs border border-editor-group-border">
-				<button
-					className="w-full flex items-center gap-2 p-2 bg-code transition-colors rounded-t-xs justify-between cursor-pointer"
-					onClick={() => setIsExpanded((prev) => !prev)}
-					type="button">
-					<div className="flex items-center gap-3">
-						<div className={cn("flex items-center gap-2", actionStyle.borderClass)}>
-							<ActionIcon className={cn("w-5 h-5", actionStyle.iconClass)} />
-							<span className="font-medium">{file.path}</span>
+				{collapsible ? (
+					<button
+						className="w-full flex items-center gap-2 p-2 bg-code transition-colors rounded-t-xs justify-between cursor-pointer"
+						onClick={() => setIsExpanded((prev) => !prev)}
+						type="button">
+						<div className="flex items-center gap-3">
+							<div className={cn("flex items-center gap-2", actionStyle.borderClass)}>
+								<ActionIcon className={cn("w-5 h-5", actionStyle.iconClass)} />
+								<span className="font-medium">{file.path}</span>
+							</div>
 						</div>
+						<DiffStats additions={file.additions} deletions={file.deletions} />
+					</button>
+				) : (
+					<div className="w-full flex items-center gap-2 p-2 bg-code rounded-t-xs justify-between">
+						<div className="flex items-center gap-3">
+							<div className={cn("flex items-center gap-2", actionStyle.borderClass)}>
+								<ActionIcon className={cn("w-5 h-5", actionStyle.iconClass)} />
+								<span className="font-medium">{file.path}</span>
+							</div>
+						</div>
+						<DiffStats additions={file.additions} deletions={file.deletions} />
 					</div>
-					<DiffStats additions={file.additions} deletions={file.deletions} />
-				</button>
+				)}
 
-				{isExpanded && (
+				{shouldShowDiff && (
 					<div
 						className="border-t border-code-block-background max-h-72 overflow-y-auto"
 						onScroll={handleScroll}
@@ -133,6 +148,7 @@ const FileBlock = memo<{ file: Patch; isStreaming: boolean }>(
 		prev.file.action === next.file.action &&
 		prev.file.additions === next.file.additions &&
 		prev.file.deletions === next.file.deletions &&
+		prev.collapsible === next.collapsible &&
 		prev.file.lines === next.file.lines, // Reference equality - parsing creates new arrays only when content changes
 )
 

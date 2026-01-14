@@ -2,7 +2,6 @@ import { ClineMessage } from "@shared/ExtensionMessage"
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react"
 import React, { useCallback, useLayoutEffect, useMemo, useState } from "react"
 import Thumbnails from "@/components/common/Thumbnails"
-import { getModeSpecificFields, normalizeApiConfiguration } from "@/components/settings/utils/providerUtils"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { cn } from "@/lib/utils"
 import { getEnvironmentColor } from "@/utils/environmentColors"
@@ -10,7 +9,6 @@ import CopyTaskButton from "./buttons/CopyTaskButton"
 import DeleteTaskButton from "./buttons/DeleteTaskButton"
 import NewTaskButton from "./buttons/NewTaskButton"
 import OpenDiskConversationHistoryButton from "./buttons/OpenDiskConversationHistoryButton"
-import { CheckpointError } from "./CheckpointError"
 import ContextWindow from "./ContextWindow"
 import { FocusChain } from "./FocusChain"
 import { highlightText } from "./Highlights"
@@ -47,8 +45,6 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 	const {
 		apiConfiguration,
 		currentTaskItem,
-		checkpointManagerErrorMessage,
-		navigateToSettings,
 		mode,
 		expandTaskHeader: isTaskExpanded,
 		setExpandTaskHeader: setIsTaskExpanded,
@@ -87,8 +83,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 	}, [isHighlightedTextExpanded])
 
 	// Simplified computed values
-	const { selectedModelInfo } = normalizeApiConfiguration(apiConfiguration, mode)
-	const modeFields = getModeSpecificFields(apiConfiguration, mode)
+	const selectedModelInfo: { contextWindow?: number } = {}
+	const modeFields: { apiProvider?: string; openAiModelInfo?: { inputPrice?: any; outputPrice?: any } } = {}
 
 	const isCostAvailable =
 		(totalCost &&
@@ -100,19 +96,10 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 	// Event handlers
 	const toggleTaskExpanded = useCallback(() => setIsTaskExpanded(!isTaskExpanded), [setIsTaskExpanded, isTaskExpanded])
 
-	const handleCheckpointSettingsClick = useCallback(() => {
-		navigateToSettings("features")
-	}, [navigateToSettings])
-
 	const environmentBorderColor = getEnvironmentColor(environment, "border")
 
 	return (
 		<div className="pt-2 pb-2 pl-[15px] pr-[14px] flex flex-col gap-2">
-			{/* Display Checkpoint Error */}
-			<CheckpointError
-				checkpointManagerErrorMessage={checkpointManagerErrorMessage}
-				handleCheckpointSettingsClick={handleCheckpointSettingsClick}
-			/>
 			{/* Task Header */}
 			<div
 				className={cn(
@@ -163,16 +150,20 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 						)}
 					</div>
 					<div className="inline-flex items-center justify-end select-none shrink-0">
-						{isCostAvailable && (
-							<div
-								className="mx-1 px-1 py-0.25 rounded-full inline-flex shrink-0 text-badge-background bg-badge-foreground/80 items-center"
-								id="price-tag">
-								<span className="text-xs sm:text-sm">${totalCost?.toFixed(4)}</span>
-							</div>
-						)}
 						<NewTaskButton className={BUTTON_CLASS} onClick={onClose} />
 					</div>
 				</div>
+
+				<ContextWindow
+					cacheReads={cacheReads}
+					cacheWrites={cacheWrites}
+					contextWindow={selectedModelInfo?.contextWindow}
+					lastApiReqTotalTokens={lastApiReqTotalTokens}
+					onSendMessage={onSendMessage}
+					tokensIn={tokensIn}
+					tokensOut={tokensOut}
+					useAutoCondense={false} // Disable auto-condense configuration in UI for now
+				/>
 
 				{/* Expand/Collapse Task Details */}
 				{isTaskExpanded && (
@@ -202,17 +193,6 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 						{((task.images && task.images.length > 0) || (task.files && task.files.length > 0)) && (
 							<Thumbnails files={task.files ?? []} images={task.images ?? []} />
 						)}
-
-						<ContextWindow
-							cacheReads={cacheReads}
-							cacheWrites={cacheWrites}
-							contextWindow={selectedModelInfo?.contextWindow}
-							lastApiReqTotalTokens={lastApiReqTotalTokens}
-							onSendMessage={onSendMessage}
-							tokensIn={tokensIn}
-							tokensOut={tokensOut}
-							useAutoCondense={false} // Disable auto-condense configuration in UI for now
-						/>
 					</div>
 				)}
 			</div>

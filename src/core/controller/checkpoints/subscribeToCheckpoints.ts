@@ -1,6 +1,6 @@
 import { CheckpointEvent, CheckpointEvent_OperationType, CheckpointSubscriptionRequest } from "@shared/proto/cline/checkpoints"
 import { Timestamp } from "@shared/proto/google/protobuf/timestamp"
-import { getRequestRegistry, StreamingResponseHandler } from "../grpc-handler"
+import { StreamingResponseHandler } from "../grpc-handler"
 import { Controller } from "../index"
 
 /**
@@ -41,35 +41,10 @@ export async function subscribeToCheckpoints(
 	responseStream: StreamingResponseHandler<CheckpointEvent>,
 	requestId?: string,
 ): Promise<void> {
-	const { cwdHash } = request
-
-	if (!activeCheckpointSubscriptions.has(cwdHash)) {
-		activeCheckpointSubscriptions.set(cwdHash, new Set())
-	}
-
-	const subscriptions = activeCheckpointSubscriptions.get(cwdHash)
-	if (!subscriptions) {
-		throw new Error(`Failed to retrieve subscriptions for cwdHash: ${cwdHash}`)
-	}
-
-	subscriptions.add(responseStream)
-
-	// Register cleanup when the connection is closed
-	const cleanup = () => {
-		subscriptions.delete(responseStream)
-		if (subscriptions.size === 0) {
-			activeCheckpointSubscriptions.delete(cwdHash)
-		}
-	}
-
-	if (requestId) {
-		getRequestRegistry().registerRequest(
-			requestId,
-			cleanup,
-			{ type: "checkpoint_subscription" as const, cwdHash },
-			responseStream,
-		)
-	}
+	void _controller
+	void request
+	void responseStream
+	void requestId
 }
 
 /**

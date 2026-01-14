@@ -9,16 +9,10 @@ interface AutoApproveBarProps {
 }
 
 const AutoApproveBar = ({ style }: AutoApproveBarProps) => {
-	const { autoApprovalSettings, yoloModeToggled, navigateToSettings } = useExtensionState()
+	const { autoApprovalSettings, yoloModeToggled } = useExtensionState()
 
 	const [isModalVisible, setIsModalVisible] = useState(false)
 	const buttonRef = useRef<HTMLDivElement>(null)
-
-	const handleNavigateToFeatures = (e: React.MouseEvent) => {
-		e.preventDefault()
-		e.stopPropagation()
-		navigateToSettings("features")
-	}
 
 	const getEnabledActionsText = () => {
 		const baseClasses = isModalVisible
@@ -100,13 +94,7 @@ const AutoApproveBar = ({ style }: AutoApproveBarProps) => {
 
 				<div className="pt-4 pb-3.5 px-3.5">
 					<div className="text-sm mb-1">Auto-approve: YOLO</div>
-					<div className="text-muted-foreground text-xs">
-						YOLO mode is enabled.{" "}
-						<span className="underline cursor-pointer hover:text-foreground" onClick={handleNavigateToFeatures}>
-							Disable it in Settings
-						</span>
-						.
-					</div>
+					<div className="text-muted-foreground text-xs">YOLO mode is enabled.</div>
 				</div>
 			</div>
 		)

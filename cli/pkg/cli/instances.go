@@ -62,8 +62,8 @@ func NewInstanceCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "instance",
 		Aliases: []string{"i"},
-		Short:   "Manage Cline instances",
-		Long:    `List and manage multiple Cline instances similar to kubectl contexts.`,
+		Short:   "Manage instances",
+		Long:    `List and manage multiple instances similar to kubectl contexts.`,
 	}
 
 	cmd.AddCommand(newInstanceListCommand())

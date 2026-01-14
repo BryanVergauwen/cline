@@ -22,7 +22,6 @@ import {
 import { sendPartialMessageEvent } from "@core/controller/ui/subscribeToPartialMessage"
 import { executePreCompactHookWithCleanup, HookCancellationError, HookExecution } from "@core/hooks/precompact-executor"
 import { ClineIgnoreController } from "@core/ignore/ClineIgnoreController"
-import { parseMentions } from "@core/mentions"
 import { summarizeTask } from "@core/prompts/contextManagement"
 import { formatResponse } from "@core/prompts/responses"
 import { parseSlashCommands } from "@core/slash-commands"
@@ -36,12 +35,8 @@ import {
 import { releaseTaskLock } from "@core/task/TaskLockUtils"
 import { isMultiRootEnabled } from "@core/workspace/multi-root-utils"
 import { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager"
-import { buildCheckpointManager, shouldUseMultiRoot } from "@integrations/checkpoints/factory"
-import { ensureCheckpointInitialized } from "@integrations/checkpoints/initializer"
-import { ICheckpointManager } from "@integrations/checkpoints/types"
 import { DiffViewProvider } from "@integrations/editor/DiffViewProvider"
 import { formatContentBlockToMarkdown } from "@integrations/misc/export-markdown"
-import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
 import { ITerminalManager } from "@integrations/terminal/types"
 import { BrowserSession } from "@services/browser/BrowserSession"
@@ -91,7 +86,6 @@ import {
 	ClineToolResponseContent,
 	ClineUserContent,
 } from "@/shared/messages"
-import { ShowMessageType } from "@/shared/proto/index.host"
 import { isClineCliInstalled, isCliSubagentContext } from "@/utils/cli-detector"
 import { ensureLocalClineDirExists } from "../context/instructions/user-instructions/rule-helpers"
 import { refreshWorkflowToggles } from "../context/instructions/user-instructions/workflows"
@@ -107,6 +101,10 @@ import { detectAvailableCliTools, extractProviderDomainFromUrl, updateApiReqMsg 
 import { buildUserFeedbackContent } from "./utils/buildUserFeedbackContent"
 
 export type ToolResponse = ClineToolResponseContent
+
+type ICheckpointManager = {
+	presentMultifileDiff?: (messageTs: number, seeNewChangesSinceLastTaskCompletion: boolean) => Promise<void>
+}
 
 type TaskParams = {
 	controller: Controller
@@ -138,7 +136,6 @@ export class Task {
 	readonly ulid: string
 	private taskIsFavorited?: boolean
 	private cwd: string
-	private taskInitializationStartTime: number
 
 	taskState: TaskState
 
@@ -266,7 +263,6 @@ export class Task {
 			taskLockAcquired,
 		} = params
 
-		this.taskInitializationStartTime = performance.now()
 		this.taskState = new TaskState()
 		this.controller = controller
 		this.mcpHub = mcpHub
@@ -322,9 +318,6 @@ export class Task {
 			this.ulid = historyItem.ulid ?? ulid()
 			this.taskIsFavorited = historyItem.isFavorited
 			this.taskState.conversationHistoryDeletedRange = historyItem.conversationHistoryDeletedRange
-			if (historyItem.checkpointManagerErrorMessage) {
-				this.taskState.checkpointManagerErrorMessage = historyItem.checkpointManagerErrorMessage
-			}
 		} else if (task || images || files) {
 			this.ulid = ulid()
 		} else {
@@ -358,59 +351,7 @@ export class Task {
 			})
 		}
 
-		// Check for multiroot workspace and warn about checkpoints
-		const isMultiRootWorkspace = this.workspaceManager && this.workspaceManager.getRoots().length > 1
-		const checkpointsEnabled = this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting")
-
-		if (isMultiRootWorkspace && checkpointsEnabled) {
-			// Set checkpoint manager error message to display warning in TaskHeader
-			this.taskState.checkpointManagerErrorMessage = "Checkpoints are not currently supported in multi-root workspaces."
-		}
-
-		// Initialize checkpoint manager based on workspace configuration
-		if (!isMultiRootWorkspace) {
-			try {
-				this.checkpointManager = buildCheckpointManager({
-					taskId: this.taskId,
-					messageStateHandler: this.messageStateHandler,
-					fileContextTracker: this.fileContextTracker,
-					diffViewProvider: this.diffViewProvider,
-					taskState: this.taskState,
-					workspaceManager: this.workspaceManager,
-					updateTaskHistory: this.updateTaskHistory,
-					say: this.say.bind(this),
-					cancelTask: this.cancelTask,
-					postStateToWebview: this.postStateToWebview,
-					initialConversationHistoryDeletedRange: this.taskState.conversationHistoryDeletedRange,
-					initialCheckpointManagerErrorMessage: this.taskState.checkpointManagerErrorMessage,
-					stateManager: this.stateManager,
-				})
-
-				// If multi-root, kick off non-blocking initialization
-				// Unreachable for now, leaving in for future multi-root checkpoint support
-				if (
-					shouldUseMultiRoot({
-						workspaceManager: this.workspaceManager,
-						enableCheckpoints: this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting"),
-						stateManager: this.stateManager,
-					})
-				) {
-					this.checkpointManager.initialize?.().catch((error: Error) => {
-						console.error("Failed to initialize multi-root checkpoint manager:", error)
-						this.taskState.checkpointManagerErrorMessage = error?.message || String(error)
-					})
-				}
-			} catch (error) {
-				console.error("Failed to initialize checkpoint manager:", error)
-				if (this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting")) {
-					const errorMessage = error instanceof Error ? error.message : "Unknown error"
-					HostProvider.window.showMessage({
-						type: ShowMessageType.ERROR,
-						message: `Failed to initialize checkpoint manager: ${errorMessage}`,
-					})
-				}
-			}
-		}
+		this.checkpointManager = undefined
 
 		// Prepare effective API configuration
 		const apiConfiguration = this.stateManager.getApiConfiguration()
@@ -546,11 +487,11 @@ export class Task {
 			isMultiRootEnabled(this.stateManager),
 			this.say.bind(this),
 			this.ask.bind(this),
-			this.saveCheckpointCallback.bind(this),
+			() => Promise.resolve(), // saveCheckpointCallback
 			this.sayAndCreateMissingParamError.bind(this),
 			this.removeLastPartialMessageIfExistsWithType.bind(this),
 			this.executeCommandTool.bind(this),
-			() => this.checkpointManager?.doesLatestTaskCompletionHaveNewChanges() ?? Promise.resolve(false),
+			() => Promise.resolve(false), // doesLatestTaskCompletionHaveNewChanges
 			this.FocusChainManager?.updateFCListFromToolResponse.bind(this.FocusChainManager) || (async () => {}),
 			this.switchToActModeCallback.bind(this),
 			this.cancelTask,
@@ -809,7 +750,7 @@ export class Task {
 	async sayAndCreateMissingParamError(toolName: ClineDefaultTool, paramName: string, relPath?: string) {
 		await this.say(
 			"error",
-			`Cline tried to use ${toolName}${
+			`Tried to use ${toolName}${
 				relPath ? ` for '${relPath.toPosix()}'` : ""
 			} without value for required parameter '${paramName}'. Retrying...`,
 		)
@@ -823,10 +764,6 @@ export class Task {
 			this.messageStateHandler.setClineMessages(clineMessages.slice(0, -1))
 			await this.messageStateHandler.saveClineMessagesAndUpdateHistory()
 		}
-	}
-
-	private async saveCheckpointCallback(isAttemptCompletionMessage?: boolean, completionMessageTs?: number): Promise<void> {
-		return this.checkpointManager?.saveCheckpoint(isAttemptCompletionMessage, completionMessageTs) ?? Promise.resolve()
 	}
 
 	/**
@@ -961,15 +898,7 @@ export class Task {
 			...imageBlocks,
 		]
 
-		if (files && files.length > 0) {
-			const fileContentString = await processFilesIntoText(files)
-			if (fileContentString) {
-				userContent.push({
-					type: "text",
-					text: fileContentString,
-				})
-			}
-		}
+		void files
 
 		// Add TaskStart hook context to the conversation if provided
 		const hooksEnabled = this.stateManager.getGlobalSettingsKey("hooksEnabled")
@@ -1177,7 +1106,6 @@ export class Task {
 		let responseFiles: string[] | undefined
 		if (response === "messageResponse" || text || (images && images.length > 0) || (files && files.length > 0)) {
 			await this.say("user_feedback", text, images, files)
-			await this.checkpointManager?.saveCheckpoint()
 			responseText = text
 			responseImages = images
 			responseFiles = files
@@ -1270,15 +1198,7 @@ export class Task {
 			newUserContent.push(...formatResponse.imageBlocks(responseImages))
 		}
 
-		if (responseFiles && responseFiles.length > 0) {
-			const fileContentString = await processFilesIntoText(responseFiles)
-			if (fileContentString) {
-				newUserContent.push({
-					type: "text",
-					text: fileContentString,
-				})
-			}
-		}
+		void responseFiles
 
 		// Inject file context warning if there were pending warnings from message editing
 		if (pendingContextWarning && pendingContextWarning.length > 0) {
@@ -1669,13 +1589,11 @@ export class Task {
 		}
 
 		// Proceed with standard truncation
-		const newDeletedRange = this.contextManager.getNextTruncationRange(
+		this.taskState.conversationHistoryDeletedRange = this.contextManager.getNextTruncationRange(
 			apiConversationHistory,
 			this.taskState.conversationHistoryDeletedRange,
 			"quarter", // Force aggressive truncation
 		)
-
-		this.taskState.conversationHistoryDeletedRange = newDeletedRange
 
 		await this.messageStateHandler.saveClineMessagesAndUpdateHistory()
 		await this.contextManager.triggerApplyStandardContextTruncationNoticeChange(
@@ -1689,7 +1607,7 @@ export class Task {
 
 	async *attemptApiRequest(previousApiReqIndex: number): ApiStream {
 		// Wait for MCP servers to be connected before generating system prompt
-		await pWaitFor(() => this.mcpHub.isConnecting !== true, {
+		await pWaitFor(() => !this.mcpHub.isConnecting, {
 			timeout: 10_000,
 		}).catch(() => {
 			console.error("MCP servers failed to connect in time")
@@ -2172,17 +2090,7 @@ export class Task {
 					feedbackUserContent.push(...formatResponse.imageBlocks(images))
 				}
 
-				let fileContentString = ""
-				if (files && files.length > 0) {
-					fileContentString = await processFilesIntoText(files)
-				}
-
-				if (fileContentString) {
-					feedbackUserContent.push({
-						type: "text",
-						text: fileContentString,
-					})
-				}
+				void files
 
 				userContent = feedbackUserContent
 			}
@@ -2192,74 +2100,6 @@ export class Task {
 
 		// get previous api req's index to check token usage and determine if we need to truncate conversation history
 		const previousApiReqIndex = findLastIndex(this.messageStateHandler.getClineMessages(), (m) => m.say === "api_req_started")
-
-		// Save checkpoint if this is the first API request
-		const isFirstRequest = this.messageStateHandler.getClineMessages().filter((m) => m.say === "api_req_started").length === 0
-
-		// Initialize checkpointManager first if enabled and it's the first request
-		if (
-			isFirstRequest &&
-			this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting") &&
-			this.checkpointManager && // TODO REVIEW: may be able to implement a replacement for the 15s timer
-			!this.taskState.checkpointManagerErrorMessage
-		) {
-			try {
-				await ensureCheckpointInitialized({ checkpointManager: this.checkpointManager })
-			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : "Unknown error"
-				console.error("Failed to initialize checkpoint manager:", errorMessage)
-				this.taskState.checkpointManagerErrorMessage = errorMessage // will be displayed right away since we saveClineMessages next which posts state to webview
-				HostProvider.window.showMessage({
-					type: ShowMessageType.ERROR,
-					message: `Checkpoint initialization timed out: ${errorMessage}`,
-				})
-			}
-		}
-
-		// Now, if it's the first request AND checkpoints are enabled AND tracker was successfully initialized,
-		// then say "checkpoint_created" and perform the commit.
-		if (
-			isFirstRequest &&
-			this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting") &&
-			this.checkpointManager &&
-			!this.taskState.checkpointManagerErrorMessage
-		) {
-			await this.say("checkpoint_created") // Now this is conditional
-			const lastCheckpointMessageIndex = findLastIndex(
-				this.messageStateHandler.getClineMessages(),
-				(m) => m.say === "checkpoint_created",
-			)
-			if (lastCheckpointMessageIndex !== -1) {
-				const commitPromise = this.checkpointManager?.commit()
-				this.initialCheckpointCommitPromise = commitPromise
-				commitPromise
-					?.then(async (commitHash) => {
-						if (commitHash) {
-							await this.messageStateHandler.updateClineMessage(lastCheckpointMessageIndex, {
-								lastCheckpointHash: commitHash,
-							})
-							// saveClineMessagesAndUpdateHistory will be called later after API response,
-							// so no need to call it here unless this is the only modification to this message.
-							// For now, assuming it's handled later.
-						}
-					})
-					.catch((error) => {
-						console.error(
-							`[TaskCheckpointManager] Failed to create checkpoint commit for task ${this.taskId}:`,
-							error,
-						)
-					})
-			}
-		} else if (
-			isFirstRequest &&
-			this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting") &&
-			!this.checkpointManager &&
-			this.taskState.checkpointManagerErrorMessage
-		) {
-			// Checkpoints are enabled, but tracker failed to initialize.
-			// checkpointManagerErrorMessage is already set and will be part of the state.
-			// No explicit UI message here, error message will be in ExtensionState.
-		}
 
 		// Determine if we should compact context window
 		// Note: We delay context loading until we know if we're compacting (performance optimization)
@@ -2345,7 +2185,7 @@ export class Task {
 		}
 
 		// error handling if the user uses the /newrule command & their .clinerules is a file, for file read operations didnt work properly
-		if (clinerulesError === true) {
+		if (clinerulesError) {
 			await this.say(
 				"error",
 				"Issue with processing the /newrule command. Double check that, if '.clinerules' already exists, it's a directory and not a file. Otherwise there was an issue referencing this file/directory.",
@@ -2387,17 +2227,6 @@ export class Task {
 		})
 
 		telemetryService.captureConversationTurnEvent(this.ulid, providerId, model.id, "user", modelInfo.mode)
-
-		// Capture task initialization timing telemetry for the first API request
-		if (isFirstRequest) {
-			const durationMs = Math.round(performance.now() - this.taskInitializationStartTime)
-			telemetryService.captureTaskInitialization(
-				this.ulid,
-				this.taskId,
-				durationMs,
-				this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting"),
-			)
-		}
 
 		// since we sent off a placeholder api_req_started message to update the webview while waiting to actually start the API request (to load potential details for example), we need to update the text of that message
 		const lastApiReqIndex = findLastIndex(this.messageStateHandler.getClineMessages(), (m) => m.say === "api_req_started")
@@ -2832,9 +2661,6 @@ export class Task {
 
 				await pWaitFor(() => this.taskState.userMessageContentReady)
 
-				// Save checkpoint after all tools in this response have finished executing
-				await this.checkpointManager?.saveCheckpoint()
-
 				// if the model did not tool use, then we need to tell it to either use a tool or attempt_completion
 				const didToolUse = this.taskState.assistantMessageContent.some((block) => block.type === "tool_use")
 
@@ -2850,8 +2676,7 @@ export class Task {
 				// Reset auto-retry counter for each new API request
 				this.taskState.autoRetryAttempts = 0
 
-				const recDidEndLoop = await this.recursivelyMakeClineRequests(this.taskState.userMessageContent)
-				didEndLoop = recDidEndLoop
+				didEndLoop = await this.recursivelyMakeClineRequests(this.taskState.userMessageContent)
 			} else {
 				// if there's no assistant_responses, that means we got no text or tool_use content blocks from API which we should assume is an error
 				const { model, providerId } = this.getCurrentProviderInfo()
@@ -2968,16 +2793,8 @@ export class Task {
 		}
 
 		const parseTextBlock = async (text: string): Promise<string> => {
-			const parsedText = await parseMentions(
-				text,
-				cwd,
-				this.urlContentFetcher,
-				this.fileContextTracker,
-				this.workspaceManager,
-			)
-
 			const { processedText, needsClinerulesFileCheck: needsCheck } = await parseSlashCommands(
-				parsedText,
+				text,
 				localWorkflowToggles,
 				globalWorkflowToggles,
 				ulid,

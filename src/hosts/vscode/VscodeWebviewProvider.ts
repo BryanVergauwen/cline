@@ -58,10 +58,7 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 			localResourceRoots: [vscode.Uri.file(HostProvider.get().extensionFsPath)],
 		}
 
-		webviewView.webview.html =
-			this.context.extensionMode === vscode.ExtensionMode.Development
-				? await this.getHMRHtmlContent()
-				: this.getHtmlContent()
+		webviewView.webview.html = this.getHtmlContent()
 
 		// Sets up an event listener to listen for messages passed from the webview view context
 		// and executes code based on the message that is received

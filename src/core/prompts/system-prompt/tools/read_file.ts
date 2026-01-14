@@ -18,6 +18,19 @@ const generic: ClineToolSpec = {
 			instruction: `The path of the file to read (relative to the current working directory {{CWD}}){{MULTI_ROOT_HINT}}`,
 			usage: "File path here",
 		},
+		{
+			name: "start_line",
+			required: false,
+			instruction: "Optional. 1-indexed start line to read a specific portion of the file. Provide together with end_line.",
+			usage: "120",
+		},
+		{
+			name: "end_line",
+			required: false,
+			instruction:
+				"Optional. 1-indexed end line (inclusive) to read a specific portion of the file. Provide together with start_line.",
+			usage: "220",
+		},
 		TASK_PROGRESS_PARAMETER,
 	],
 }
@@ -34,6 +47,19 @@ const NATIVE_GPT_5: ClineToolSpec = {
 			required: true,
 			instruction: `The path of the file to read (relative to the current working directory {{CWD}}){{MULTI_ROOT_HINT}}`,
 			usage: "File path here",
+		},
+		{
+			name: "start_line",
+			required: false,
+			instruction: "Optional. 1-indexed start line to read a specific portion of the file. Provide together with end_line.",
+			usage: "120",
+		},
+		{
+			name: "end_line",
+			required: false,
+			instruction:
+				"Optional. 1-indexed end line (inclusive) to read a specific portion of the file. Provide together with start_line.",
+			usage: "220",
 		},
 		TASK_PROGRESS_PARAMETER,
 	],

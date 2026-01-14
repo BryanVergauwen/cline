@@ -5,8 +5,6 @@ import styled from "styled-components"
 import ChatErrorBoundary from "@/components/chat/ChatErrorBoundary"
 import { CODE_BLOCK_BG_COLOR } from "@/components/common/CodeBlock"
 import MarkdownBlock from "@/components/common/MarkdownBlock"
-import { DropdownContainer } from "@/components/settings/ApiOptions"
-import { updateSetting } from "@/components/settings/utils/settingsHandlers"
 import { useExtensionState } from "../../../context/ExtensionStateContext"
 import ImagePreview from "./ImagePreview"
 import LinkPreview from "./LinkPreview"
@@ -83,8 +81,8 @@ const McpResponseDisplay: React.FC<McpResponseDisplayProps> = ({ responseText })
 	const [urlMatches, setUrlMatches] = useState<UrlMatch[]>([])
 	const [error, setError] = useState<string | null>(null)
 
-	const handleDisplayModeChange = useCallback((newMode: McpDisplayMode) => {
-		updateSetting("mcpDisplayMode", newMode)
+	const handleDisplayModeChange = useCallback((_newMode: McpDisplayMode) => {
+		// Settings are disabled in this build
 	}, [])
 
 	const toggleExpand = useCallback(() => {
@@ -226,15 +224,14 @@ const McpResponseDisplay: React.FC<McpResponseDisplayProps> = ({ responseText })
 						<span className={`codicon codicon-chevron-${isExpanded ? "down" : "right"} header-icon`}></span>
 						Response
 					</div>
-					<DropdownContainer
-						style={{ minWidth: isExpanded ? "auto" : "0", visibility: isExpanded ? "visible" : "hidden" }}>
+					<div style={{ minWidth: isExpanded ? "auto" : "0", visibility: isExpanded ? "visible" : "hidden" }}>
 						<McpDisplayModeDropdown
 							onChange={handleDisplayModeChange}
 							onClick={(e) => e.stopPropagation()}
 							style={{ minWidth: "120px" }}
 							value={mcpDisplayMode}
 						/>
-					</DropdownContainer>
+					</div>
 				</ResponseHeader>
 
 				{isExpanded && <div className="response-content">{renderContent()}</div>}

@@ -14,6 +14,8 @@ export const toolParamNames = [
 	"command",
 	"requires_approval",
 	"path",
+	"start_line",
+	"end_line",
 	"absolutePath",
 	"content",
 	"diff",

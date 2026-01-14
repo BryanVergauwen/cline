@@ -5,7 +5,7 @@ import { McpServiceClient } from "@/services/grpc-client"
 import ServersToggleList from "./ServersToggleList"
 
 const ConfigureServersView = () => {
-	const { mcpServers: servers, navigateToSettings } = useExtensionState()
+	const { mcpServers: servers } = useExtensionState()
 
 	return (
 		<div style={{ padding: "16px 20px" }}>
@@ -46,12 +46,6 @@ const ConfigureServersView = () => {
 					<span className="codicon codicon-server" style={{ marginRight: "6px" }}></span>
 					Configure MCP Servers
 				</VSCodeButton>
-
-				<div style={{ textAlign: "center" }}>
-					<VSCodeLink onClick={() => navigateToSettings("features")} style={{ fontSize: "12px" }}>
-						Advanced MCP Settings
-					</VSCodeLink>
-				</div>
 			</div>
 		</div>
 	)

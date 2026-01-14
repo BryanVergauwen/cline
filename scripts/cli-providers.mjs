@@ -707,7 +707,7 @@ var rawModelDefinitions = \`${modelDefinitionsJson.replace(/`/g, '` + "`" + `')}
 // GetConfigFields returns all configuration fields
 func GetConfigFields() ([]ConfigField, error) {
 	var fields []ConfigField
-	if err := json.Unmarshal([]byte(rawConfigFields), &fields); err != nil {
+	if err := json.Unmarshal([]byte(rawConfigFields), &fields) err != nil {
 		return nil, fmt.Errorf("failed to parse config fields: %w", err)
 	}
 	return fields, nil
@@ -716,7 +716,7 @@ func GetConfigFields() ([]ConfigField, error) {
 // GetModelDefinitions returns all model definitions
 func GetModelDefinitions() (map[string]map[string]ModelInfo, error) {
 	var models map[string]map[string]ModelInfo
-	if err := json.Unmarshal([]byte(rawModelDefinitions), &models); err != nil {
+	if err := json.Unmarshal([]byte(rawModelDefinitions), &models) err != nil {
 		return nil, fmt.Errorf("failed to parse model definitions: %w", err)
 	}
 	return models, nil
@@ -749,7 +749,7 @@ func GetProviderDefinitions() (map[string]ProviderDefinition, error) {
 		return nil, err
 	}
 	
-	definitions := make(map[string]ProviderDefinition)
+	= make(map[string]ProviderDefinition)
 	
 ${providerMetadata}
 	
@@ -768,7 +768,7 @@ func IsValidProvider(providerID string) bool {
 
 // GetProviderDisplayName returns a human-readable name for a provider
 func GetProviderDisplayName(providerID string) string {
-	displayNames := map[string]string{
+	= map[string]string{
 ${providers.map((p) => `\t\t"${p}": "${getProviderDisplayName(p)}",`).join("\n")}
 	}
 	
@@ -784,11 +784,11 @@ func getFieldsByProvider(providerID string, allFields []ConfigField, required bo
 	var fields []ConfigField
 	
 	for _, field := range allFields {
-		fieldName := strings.ToLower(field.Name)
-		fieldCategory := strings.ToLower(field.Category)
-		providerName := strings.ToLower(providerID)
+		= strings.ToLower(field.Name)
+		= strings.ToLower(field.Category)
+		= strings.ToLower(providerID)
 		
-		isRelevant := false
+		= false
 		
 		// Priority 1: Check manual overrides FIRST (from GetFieldOverride in this package)
 		if override, hasOverride := GetFieldOverride(providerID, field.Name); hasOverride {
@@ -806,7 +806,7 @@ func getFieldsByProvider(providerID string, allFields []ConfigField, required bo
 		} else if fieldCategory == "general" {
 			// Priority 4: Universal fields that apply to all providers
 			// Note: ulid is excluded as it's auto-generated and users should not set it
-			universalFields := []string{"requesttimeoutms", "clineaccountid"}
+			= []string{"requesttimeoutms", "clineaccountid"}
 			for _, universal := range universalFields {
 				if fieldName == universal {
 					isRelevant = true
